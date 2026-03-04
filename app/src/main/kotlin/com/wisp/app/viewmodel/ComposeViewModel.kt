@@ -345,21 +345,13 @@ class ComposeViewModel(app: Application, private val savedStateHandle: SavedStat
             tags.addAll(Nip10.buildReplyTags(replyTo, hint))
         }
 
-        val (mentionedPubkeys, mentionedEventIds) = extractNostrRefs(content)
+        val (mentionedPubkeys, _) = extractNostrRefs(content)
         val existingPubkeys = tags.filter { it.firstOrNull() == "p" }.map { it[1] }.toSet()
         for (pubkey in mentionedPubkeys) {
             if (pubkey !in existingPubkeys) {
                 tags.add(listOf("p", pubkey))
             }
         }
-        val existingEventIds = tags.filter { it.firstOrNull() == "e" }.map { it[1] }.toSet()
-        val quoteEventId = quoteTo?.id
-        for (eventId in mentionedEventIds) {
-            if (eventId !in existingEventIds && eventId != quoteEventId) {
-                tags.add(listOf("e", eventId, "", "mention"))
-            }
-        }
-
         val finalContent = if (quoteTo != null) {
             val quoteHint = outboxRouter?.getRelayHint(quoteTo.pubkey) ?: ""
             tags.addAll(Nip18.buildQuoteTags(quoteTo, quoteHint))
