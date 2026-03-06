@@ -36,8 +36,7 @@ import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Hub
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.NotificationsOff
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.IconButton
@@ -86,8 +85,7 @@ fun WispDrawerContent(
     onCustomEmojis: () -> Unit = {},
     onConsole: () -> Unit = {},
     onRelaySettings: () -> Unit,
-    newNotesButtonHidden: Boolean = false,
-    onToggleNewNotesButton: () -> Unit = {},
+    onInterfaceSettings: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     ModalDrawerSheet(
@@ -268,6 +266,13 @@ fun WispDrawerContent(
         AnimatedVisibility(visible = settingsExpanded) {
             Column {
                 NavigationDrawerItem(
+                    icon = { Icon(Icons.Outlined.Palette, contentDescription = null) },
+                    label = { Text("Interface") },
+                    selected = false,
+                    onClick = onInterfaceSettings,
+                    modifier = Modifier.padding(start = 36.dp, end = 12.dp)
+                )
+                NavigationDrawerItem(
                     icon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
                     label = { Text("Relays") },
                     selected = false,
@@ -321,21 +326,6 @@ fun WispDrawerContent(
                     label = { Text("Console") },
                     selected = false,
                     onClick = onConsole,
-                    modifier = Modifier.padding(start = 36.dp, end = 12.dp)
-                )
-                NavigationDrawerItem(
-                    icon = {
-                        Icon(
-                            if (newNotesButtonHidden) Icons.Outlined.NotificationsOff
-                            else Icons.Outlined.Notifications,
-                            contentDescription = null
-                        )
-                    },
-                    label = {
-                        Text(if (newNotesButtonHidden) "Show New Notes Button" else "Hide New Notes Button")
-                    },
-                    selected = false,
-                    onClick = onToggleNewNotesButton,
                     modifier = Modifier.padding(start = 36.dp, end = 12.dp)
                 )
             }

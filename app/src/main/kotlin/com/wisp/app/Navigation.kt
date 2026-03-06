@@ -70,6 +70,7 @@ import com.wisp.app.ui.screen.ListScreen
 import com.wisp.app.ui.screen.ExistingUserOnboardingScreen
 import com.wisp.app.ui.screen.LoadingScreen
 import com.wisp.app.ui.screen.ListsHubScreen
+import com.wisp.app.ui.screen.InterfaceScreen
 import com.wisp.app.ui.screen.PowSettingsScreen
 import com.wisp.app.ui.screen.OnboardingScreen
 import com.wisp.app.ui.component.AddNoteToListDialog
@@ -129,12 +130,16 @@ object Routes {
     const val DRAFTS = "drafts"
     const val SOCIAL_GRAPH = "social_graph"
     const val POW_SETTINGS = "pow_settings"
+    const val INTERFACE_SETTINGS = "interface_settings"
 }
 
 @Composable
 fun WispNavHost(
     isDarkTheme: Boolean = true,
-    onToggleTheme: () -> Unit = {}
+    onToggleTheme: () -> Unit = {},
+    accentColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color(0xFFFF9800),
+    isLargeText: Boolean = false,
+    onInterfaceChanged: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = viewModel()
@@ -588,6 +593,9 @@ fun WispNavHost(
                 },
                 onPowSettings = {
                     navController.navigate(Routes.POW_SETTINGS)
+                },
+                onInterfaceSettings = {
+                    navController.navigate(Routes.INTERFACE_SETTINGS)
                 },
                 onAddToList = { eventId -> addToListEventId = eventId },
                 onRelayDetail = { url ->
@@ -1102,6 +1110,16 @@ fun WispNavHost(
             PowSettingsScreen(
                 powPrefs = feedViewModel.powPrefs,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.INTERFACE_SETTINGS) {
+            val context = LocalContext.current
+            val interfacePrefs = remember { com.wisp.app.repo.InterfacePreferences(context) }
+            InterfaceScreen(
+                interfacePrefs = interfacePrefs,
+                onBack = { navController.popBackStack() },
+                onChanged = onInterfaceChanged
             )
         }
 

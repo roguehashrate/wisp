@@ -13,6 +13,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
+import com.wisp.app.repo.InterfacePreferences
 import com.wisp.app.ui.theme.WispTheme
 
 class MainActivity : FragmentActivity() {
@@ -22,7 +24,10 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             val prefs = remember { getSharedPreferences("wisp_settings", Context.MODE_PRIVATE) }
+            val interfacePrefs = remember { InterfacePreferences(this@MainActivity) }
             var isDarkTheme by rememberSaveable { mutableStateOf(prefs.getBoolean("dark_theme", true)) }
+            var accentColor by remember { mutableStateOf(Color(interfacePrefs.getAccentColor())) }
+            var isLargeText by remember { mutableStateOf(interfacePrefs.isLargeText()) }
 
             LaunchedEffect(isDarkTheme) {
                 enableEdgeToEdge(
@@ -39,12 +44,18 @@ class MainActivity : FragmentActivity() {
                 )
             }
 
-            WispTheme(isDarkTheme = isDarkTheme) {
+            WispTheme(isDarkTheme = isDarkTheme, accentColor = accentColor, isLargeText = isLargeText) {
                 WispNavHost(
                     isDarkTheme = isDarkTheme,
                     onToggleTheme = {
                         isDarkTheme = !isDarkTheme
                         prefs.edit().putBoolean("dark_theme", isDarkTheme).apply()
+                    },
+                    accentColor = accentColor,
+                    isLargeText = isLargeText,
+                    onInterfaceChanged = {
+                        accentColor = Color(interfacePrefs.getAccentColor())
+                        isLargeText = interfacePrefs.isLargeText()
                     }
                 )
             }

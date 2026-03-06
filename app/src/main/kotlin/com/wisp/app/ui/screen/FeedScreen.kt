@@ -120,6 +120,7 @@ fun FeedScreen(
     onConsole: () -> Unit = {},
     onKeys: () -> Unit = {},
     onPowSettings: () -> Unit = {},
+    onInterfaceSettings: () -> Unit = {},
     onAddToList: (String) -> Unit = {},
     onRelayDetail: (String) -> Unit = {},
     onHashtagClick: ((String) -> Unit)? = null,
@@ -394,10 +395,9 @@ fun FeedScreen(
                     scope.launch { drawerState.close() }
                     onRelays()
                 },
-                newNotesButtonHidden = newNotesButtonHidden,
-                onToggleNewNotesButton = {
-                    if (newNotesButtonHidden) viewModel.showNewNotesButton()
-                    else viewModel.hideNewNotesButton(permanent = true)
+                onInterfaceSettings = {
+                    scope.launch { drawerState.close() }
+                    onInterfaceSettings()
                 },
                 onLogout = {
                     scope.launch { drawerState.close() }
