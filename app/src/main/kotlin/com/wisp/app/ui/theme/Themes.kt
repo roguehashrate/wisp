@@ -39,9 +39,9 @@ object Themes {
                 background = Color(0xFF2E3440),
                 surface = Color(0xFF3B4252),
                 surfaceVariant = Color(0xFF434C5E),
-                onBackground = Color(0xFFECEFF4),
-                onSurface = Color(0xFFECEFF4),
-                onSurfaceVariant = Color(0xFFD8DEE9),
+                onBackground = Color(0xFFD8DEE9),
+                onSurface = Color(0xFFD8DEE9),
+                onSurfaceVariant = Color(0xFFECEFF4),
                 outline = Color(0xFF4C566A)
             ),
             light = ThemeColors(
@@ -63,12 +63,12 @@ object Themes {
                 primary = Color(0xFFBD93F9),
                 secondary = Color(0xFFFF79C6),
                 background = Color(0xFF282A36),
-                surface = Color(0xFF383A59),
-                surfaceVariant = Color(0xFF44475A),
+                surface = Color(0xFF2E3040),
+                surfaceVariant = Color(0xFF3E4158),
                 onBackground = Color(0xFFF8F8F2),
                 onSurface = Color(0xFFF8F8F2),
-                onSurfaceVariant = Color(0xFF6272A4),
-                outline = Color(0xFF6272A4)
+                onSurfaceVariant = Color(0xFFB4B8D8),
+                outline = Color(0xFF4A4D6E)
             ),
             light = ThemeColors(
                 primary = Color(0xFFBD93F9),
@@ -117,9 +117,9 @@ object Themes {
                 background = Color(0xFF002B36),
                 surface = Color(0xFF073642),
                 surfaceVariant = Color(0xFF586E75),
-                onBackground = Color(0xFFDDDDC9),
+                onBackground = Color(0xFF93A1A1),
                 onSurface = Color(0xFFEEE8D5),
-                onSurfaceVariant = Color(0xFFB5BFB8),
+                onSurfaceVariant = Color(0xFF839496),
                 outline = Color(0xFF586E75)
             ),
             light = ThemeColors(
@@ -127,10 +127,10 @@ object Themes {
                 secondary = Color(0xFF2AA198),
                 background = Color(0xFFFDF6E3),
                 surface = Color(0xFFEEE8D5),
-                surfaceVariant = Color(0xFFE4DDC8),
+                surfaceVariant = Color(0xFF93A1A1),
                 onBackground = Color(0xFF475A6B),
                 onSurface = Color(0xFF3D4F5F),
-                onSurfaceVariant = Color(0xFF6B8070),
+                onSurfaceVariant = Color(0xFF586E75),
                 outline = Color(0xFFCCC5B5)
             )
         ),
@@ -180,8 +180,8 @@ object Themes {
                 background = Color(0xFFF3EAD3),
                 surface = Color(0xFFF2EFDF),
                 surfaceVariant = Color(0xFFE5DFC5),
-                onBackground = Color(0xFF434C5C),
-                onSurface = Color(0xFF434C5C),
+                onBackground = Color(0xFF4F5B62),
+                onSurface = Color(0xFF4F5B62),
                 onSurfaceVariant = Color(0xFF829181),
                 outline = Color(0xFFB8B4A5)
             )
@@ -193,11 +193,11 @@ object Themes {
                 primary = Color(0xFF61AFEF),
                 secondary = Color(0xFFC678DD),
                 background = Color(0xFF282C34),
-                surface = Color(0xFF21252B),
+                surface = Color(0xFF1E2228),
                 surfaceVariant = Color(0xFF2C313C),
-                onBackground = Color(0xFFABB2BF),
-                onSurface = Color(0xFFABB2BF),
-                onSurfaceVariant = Color(0xFF5C6370),
+                onBackground = Color(0xFFB0B8C4),
+                onSurface = Color(0xFFB0B8C4),
+                onSurfaceVariant = Color(0xFF9DA5B4),
                 outline = Color(0xFF4B5263)
             ),
             light = ThemeColors(
@@ -216,19 +216,19 @@ object Themes {
             name = "tokyonight",
             displayName = "Tokyo Night",
             dark = ThemeColors(
-                primary = Color(0xFF7AA2F7),
-                secondary = Color(0xFFBB9AF7),
-                background = Color(0xFF1A1B26),
-                surface = Color(0xFF24283B),
-                surfaceVariant = Color(0xFF414868),
+                primary = Color(0xFF2AC3DE),
+                secondary = Color(0xFFF7768E),
+                background = Color(0xFF16161E),
+                surface = Color(0xFF1F2335),
+                surfaceVariant = Color(0xFF365A77),
                 onBackground = Color(0xFFC0CAF5),
                 onSurface = Color(0xFFC0CAF5),
                 onSurfaceVariant = Color(0xFFA9B1D6),
-                outline = Color(0xFF414868)
+                outline = Color(0xFF365A77)
             ),
             light = ThemeColors(
-                primary = Color(0xFF7AA2F7),
-                secondary = Color(0xFFBB9AF7),
+                primary = Color(0xFF2AC3DE),
+                secondary = Color(0xFFF7768E),
                 background = Color(0xFFEEF1F8),
                 surface = Color(0xFFE8EAEF),
                 surfaceVariant = Color(0xFFD0D4E0),
