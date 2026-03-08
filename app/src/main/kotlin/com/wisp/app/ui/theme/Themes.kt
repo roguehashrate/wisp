@@ -117,9 +117,9 @@ object Themes {
                 background = Color(0xFF002B36),
                 surface = Color(0xFF073642),
                 surfaceVariant = Color(0xFF586E75),
-                onBackground = Color(0xFF839496),
-                onSurface = Color(0xFF93A1A1),
-                onSurfaceVariant = Color(0xFF657B83),
+                onBackground = Color(0xFFDDDDC9),
+                onSurface = Color(0xFFEEE8D5),
+                onSurfaceVariant = Color(0xFFB5BFB8),
                 outline = Color(0xFF586E75)
             ),
             light = ThemeColors(
@@ -127,11 +127,11 @@ object Themes {
                 secondary = Color(0xFF2AA198),
                 background = Color(0xFFFDF6E3),
                 surface = Color(0xFFEEE8D5),
-                surfaceVariant = Color(0xFF93A1A1),
-                onBackground = Color(0xFF657B83),
-                onSurface = Color(0xFF586E75),
-                onSurfaceVariant = Color(0xFF839496),
-                outline = Color(0xFF93A1A1)
+                surfaceVariant = Color(0xFFDDD6C1),
+                onBackground = Color(0xFF3D4F5F),
+                onSurface = Color(0xFF2E3D4D),
+                onSurfaceVariant = Color(0xFF5A6A7A),
+                outline = Color(0xFFB0B0A0)
             )
         ),
         ThemePreset(
@@ -223,7 +223,7 @@ object Themes {
                 surfaceVariant = Color(0xFF414868),
                 onBackground = Color(0xFFC0CAF5),
                 onSurface = Color(0xFFC0CAF5),
-                onSurfaceVariant = Color(0xFF565F89),
+                onSurfaceVariant = Color(0xFFA9B1D6),
                 outline = Color(0xFF414868)
             ),
             light = ThemeColors(

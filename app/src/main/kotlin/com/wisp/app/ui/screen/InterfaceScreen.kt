@@ -136,36 +136,55 @@ fun InterfaceScreen(
             Spacer(Modifier.height(24.dp))
 
             // Popular Themes section
-            Text(
-                text = "Popular Themes",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "Choose a color scheme",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(12.dp))
+            var themesExpanded by remember { mutableStateOf(false) }
 
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { themesExpanded = !themesExpanded }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Themes.themes.forEach { theme ->
-                    ThemeCard(
-                        theme = theme,
-                        isSelected = selectedTheme == theme.name,
-                        isDark = true,
-                        onClick = {
-                            selectedTheme = theme.name
-                            isCustomTheme = theme.name == "wisp"
-                            interfacePrefs.setTheme(theme.name)
-                            onChanged()
-                        }
+                Column {
+                    Text(
+                        text = "Popular Themes",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
+                    Text(
+                        text = "Choose a color scheme",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = if (themesExpanded) "▲" else "▼",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (themesExpanded) {
+                Spacer(Modifier.height(12.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Themes.themes.forEach { theme ->
+                        ThemeCard(
+                            theme = theme,
+                            isSelected = selectedTheme == theme.name,
+                            isDark = true,
+                            onClick = {
+                                selectedTheme = theme.name
+                                isCustomTheme = theme.name == "wisp"
+                                interfacePrefs.setTheme(theme.name)
+                                onChanged()
+                            }
+                        )
+                    }
                 }
             }
 
