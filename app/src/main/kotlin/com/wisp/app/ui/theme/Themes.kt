@@ -161,29 +161,29 @@ object Themes {
             )
         ),
         ThemePreset(
-            name = "monokai",
-            displayName = "Monokai",
+            name = "everforest",
+            displayName = "Everforest",
             dark = ThemeColors(
-                primary = Color(0xFFF92672),
-                secondary = Color(0xFFA6E22E),
-                background = Color(0xFF272822),
-                surface = Color(0xFF3E3D32),
-                surfaceVariant = Color(0xFF49483E),
-                onBackground = Color(0xFFF8F8F2),
-                onSurface = Color(0xFFF8F8F2),
-                onSurfaceVariant = Color(0xFF75715E),
-                outline = Color(0xFF49483E)
+                primary = Color(0xFF7FBBB3),
+                secondary = Color(0xFFA7C080),
+                background = Color(0xFF272E33),
+                surface = Color(0xFF333D43),
+                surfaceVariant = Color(0xFF3B484E),
+                onBackground = Color(0xFFD3C6AA),
+                onSurface = Color(0xFFD3C6AA),
+                onSurfaceVariant = Color(0xFF87946A),
+                outline = Color(0xFF4B555C)
             ),
             light = ThemeColors(
-                primary = Color(0xFFFC3D68),
-                secondary = Color(0xFFA6E22E),
-                background = Color(0xFFFFFAF8),
-                surface = Color(0xFFF5F5F5),
-                surfaceVariant = Color(0xFFE8E8E8),
-                onBackground = Color(0xFF272822),
-                onSurface = Color(0xFF272822),
-                onSurfaceVariant = Color(0xFF75715E),
-                outline = Color(0xFFE0E0E0)
+                primary = Color(0xFF3F94A8),
+                secondary = Color(0xFF8DA101),
+                background = Color(0xFFFAF6E9),
+                surface = Color(0xFFF2EFEA),
+                surfaceVariant = Color(0xFFE6E0D4),
+                onBackground = Color(0xFF5C6B73),
+                onSurface = Color(0xFF5C6B73),
+                onSurfaceVariant = Color(0xFF7F9791),
+                outline = Color(0xFFD4D0C5)
             )
         ),
         ThemePreset(
