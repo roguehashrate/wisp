@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +55,9 @@ fun WispBottomBar(
     notifSoundEnabled: Boolean = true,
     onTabSelected: (BottomTab) -> Unit
 ) {
-    NavigationBar {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
         BottomTab.entries.forEach { tab ->
             val selected = currentRoute == tab.route
             val hasUnread = when (tab) {
@@ -68,6 +71,11 @@ fun WispBottomBar(
             NavigationBarItem(
                 selected = selected,
                 onClick = { onTabSelected(tab) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 icon = {
                     Box(
                         modifier = Modifier.requiredSize(24.dp),
@@ -79,7 +87,8 @@ fun WispBottomBar(
                         else tab.unselectedIcon
                         Icon(
                             imageVector = icon,
-                            contentDescription = tab.label
+                            contentDescription = tab.label,
+                            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (hasUnread) {
                             Box(

@@ -28,6 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -478,12 +479,20 @@ private fun ResultFilterSelector(
         FilterChip(
             selected = localFilter == LocalFilter.PEOPLE,
             onClick = { onSelectFilter(LocalFilter.PEOPLE) },
-            label = { Text("People") }
+            label = { Text("People") },
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+            )
         )
         FilterChip(
             selected = localFilter == LocalFilter.NOTES,
             onClick = { onSelectFilter(LocalFilter.NOTES) },
-            label = { Text("Notes") }
+            label = { Text("Notes") },
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+            )
         )
     }
 }
