@@ -196,7 +196,9 @@ class StartupCoordinator(
             .filter { it.url !in pinnedUrls }
         val initialRelays = pinnedRelays + cachedScored
         relayPool.updateRelays(initialRelays)
-        relayPool.updateDmRelays(keyRepo.getDmRelays())
+        val dmRelays = keyRepo.getDmRelays()
+        relayPool.updateDmRelays(dmRelays)
+        eventRepo.dmRelayUrls = dmRelays.toSet()
 
         scope.launch {
             relayInfoRepo.prefetchAll(initialRelays.map { it.url })
@@ -555,6 +557,16 @@ class StartupCoordinator(
             relayPool.sendToRelay(url, notifReqMsg)
         }
 
+        // Fetch private zap receipts from DM relays
+        if (relayPool.hasDmRelays()) {
+            val dmZapFilter = Filter(
+                kinds = listOf(9735),
+                pTags = listOf(myPubkey),
+                limit = 100
+            )
+            relayPool.sendToDmRelays(ClientMessage.req("notif", dmZapFilter))
+        }
+
         // Fetch the user's own recent notes upfront so notification referenced events
         // (reactions, zaps, reposts all point at our events) are in cache before
         // engagement subscriptions start.
@@ -711,7 +723,9 @@ class StartupCoordinator(
         val relays = keyRepo.getRelays()
         relayPool.setPinnedRelays(relays.map { it.url }.toSet())
         relayPool.updateRelays(relays)
-        relayPool.updateDmRelays(keyRepo.getDmRelays())
+        val dmRelays = keyRepo.getDmRelays()
+        relayPool.updateDmRelays(dmRelays)
+        eventRepo.dmRelayUrls = dmRelays.toSet()
         feedSub.subscribeFeed()
     }
 }
