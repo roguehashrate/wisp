@@ -109,29 +109,29 @@ object Themes {
             )
         ),
         ThemePreset(
-            name = "solarized",
-            displayName = "Solarized",
+            name = "rosepine",
+            displayName = "Rose Pine",
             dark = ThemeColors(
-                primary = Color(0xFF268BD2),
-                secondary = Color(0xFF2AA198),
-                background = Color(0xFF002B36),
-                surface = Color(0xFF073642),
-                surfaceVariant = Color(0xFF586E75),
-                onBackground = Color(0xFF93A1A1),
-                onSurface = Color(0xFFEEE8D5),
-                onSurfaceVariant = Color(0xFF839496),
-                outline = Color(0xFF586E75)
+                primary = Color(0xFFE88B7B),
+                secondary = Color(0xFFC4A7E7),
+                background = Color(0xFF191724),
+                surface = Color(0xFF26233A),
+                surfaceVariant = Color(0xFF363449),
+                onBackground = Color(0xFFE0DEF4),
+                onSurface = Color(0xFFE0DEF4),
+                onSurfaceVariant = Color(0xFF6E6A86),
+                outline = Color(0xFF44475A)
             ),
             light = ThemeColors(
-                primary = Color(0xFF268BD2),
-                secondary = Color(0xFF2AA198),
-                background = Color(0xFFFDF6E3),
-                surface = Color(0xFFEEE8D5),
-                surfaceVariant = Color(0xFF93A1A1),
-                onBackground = Color(0xFF475A6B),
-                onSurface = Color(0xFF3D4F5F),
-                onSurfaceVariant = Color(0xFF586E75),
-                outline = Color(0xFFCCC5B5)
+                primary = Color(0xFFE05A54),
+                secondary = Color(0xFF9C6ADE),
+                background = Color(0xFFFAF4ED),
+                surface = Color(0xFFF4EEE4),
+                surfaceVariant = Color(0xFFE8DFD3),
+                onBackground = Color(0xFF57534E),
+                onSurface = Color(0xFF57534E),
+                onSurfaceVariant = Color(0xFF797069),
+                outline = Color(0xFFD4D0C8)
             )
         ),
         ThemePreset(
