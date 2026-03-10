@@ -47,7 +47,7 @@ class MetadataFetcher(
     // Quoted event fetching
     private val scannedQuoteEvents = mutableSetOf<String>()
     private val failedQuoteFetches = mutableMapOf<String, Long>() // eventId -> timestamp of failure
-    private val nostrNoteUriRegex = Regex("""nostr:(note1|nevent1)[a-z0-9]+""")
+    private val nostrNoteUriRegex = Regex("""nostr:(note1|nevent1|naddr1)[a-z0-9]+""")
     private val validHexId = Regex("""^[0-9a-f]{64}$""")
 
     // Pubkeys that have been attempted MAX times and never found — stop fetching from feeds.
@@ -256,8 +256,14 @@ class MetadataFetcher(
             }
         for (match in nostrNoteUriRegex.findAll(event.content)) {
             val decoded = Nip19.decodeNostrUri(match.value)
-            if (decoded is NostrUriData.NoteRef) {
-                requestQuotedEvent(decoded.eventId, decoded.relays)
+            when (decoded) {
+                is NostrUriData.NoteRef -> requestQuotedEvent(decoded.eventId, decoded.relays)
+                is NostrUriData.AddressRef -> {
+                    val kind = decoded.kind ?: continue
+                    val author = decoded.author ?: continue
+                    requestAddressableEvent(kind, author, decoded.dTag, decoded.relays)
+                }
+                else -> {}
             }
         }
     }
@@ -273,7 +279,7 @@ class MetadataFetcher(
                     addToPendingProfiles(reposter)
                 }
             }
-            if (event.kind == 1 && event.id !in scannedQuoteEvents) {
+            if ((event.kind == 1 || event.kind == 30023) && event.id !in scannedQuoteEvents) {
                 scannedQuoteEvents.add(event.id)
                 fetchQuotedEvents(event)
             }
