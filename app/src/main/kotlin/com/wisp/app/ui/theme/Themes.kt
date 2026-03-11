@@ -237,6 +237,84 @@ object Themes {
                 onSurfaceVariant = Color(0xFF2A2C40),
                 outline = Color(0xFF9094A8)
             )
+        ),
+        ThemePreset(
+            name = "earth",
+            displayName = "Earth",
+            dark = ThemeColors(
+                primary = Color(0xFF8FBC8F),
+                secondary = Color(0xFFD4A574),
+                background = Color(0xFF1A1814),
+                surface = Color(0xFF2A2520),
+                surfaceVariant = Color(0xFF3A3530),
+                onBackground = Color(0xFFE8DFD0),
+                onSurface = Color(0xFFE8DFD0),
+                onSurfaceVariant = Color(0xFFA89880),
+                outline = Color(0xFF454038)
+            ),
+            light = ThemeColors(
+                primary = Color(0xFF4A6B48),
+                secondary = Color(0xFF6B5010),
+                background = Color(0xFFD8D2C4),
+                surface = Color(0xFFCCC6B8),
+                surfaceVariant = Color(0xFFBEB4A4),
+                onBackground = Color(0xFF302820),
+                onSurface = Color(0xFF302820),
+                onSurfaceVariant = Color(0xFF4A4030),
+                outline = Color(0xFF9A9080)
+            )
+        ),
+        ThemePreset(
+            name = "neonnight",
+            displayName = "Neon Night",
+            dark = ThemeColors(
+                primary = Color(0xFFDD92F6),
+                secondary = Color(0xFF8CE8FF),
+                background = Color(0xFF20242D),
+                surface = Color(0xFF282E3A),
+                surfaceVariant = Color(0xFF353E4C),
+                onBackground = Color(0xFFC7C8FF),
+                onSurface = Color(0xFFC7C8FF),
+                onSurfaceVariant = Color(0xFF9AA0C0),
+                outline = Color(0xFF404858)
+            ),
+            light = ThemeColors(
+                primary = Color(0xFF285088),
+                secondary = Color(0xFF006070),
+                background = Color(0xFFCDD2E0),
+                surface = Color(0xFFBEC4D4),
+                surfaceVariant = Color(0xFFA8B0C4),
+                onBackground = Color(0xFF1E2030),
+                onSurface = Color(0xFF1E2030),
+                onSurfaceVariant = Color(0xFF383848),
+                outline = Color(0xFF8890A0)
+            )
+        ),
+        ThemePreset(
+            name = "srcery",
+            displayName = "Srcery",
+            dark = ThemeColors(
+                primary = Color(0xFF2C78BF),
+                secondary = Color(0xFF519F50),
+                background = Color(0xFF1C1B19),
+                surface = Color(0xFF262424),
+                surfaceVariant = Color(0xFF303030),
+                onBackground = Color(0xFFBAA67F),
+                onSurface = Color(0xFFBAA67F),
+                onSurfaceVariant = Color(0xFF918175),
+                outline = Color(0xFF3A3A3A)
+            ),
+            light = ThemeColors(
+                primary = Color(0xFF225A9A),
+                secondary = Color(0xFF407A40),
+                background = Color(0xFFD4CFC0),
+                surface = Color(0xFFC8C2B4),
+                surfaceVariant = Color(0xFFB4AFA0),
+                onBackground = Color(0xFF1C1B19),
+                onSurface = Color(0xFF1C1B19),
+                onSurfaceVariant = Color(0xFF5A5548),
+                outline = Color(0xFF989088)
+            )
         )
     )
 
