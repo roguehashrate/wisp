@@ -7,6 +7,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -16,6 +19,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -1038,6 +1042,25 @@ private fun ReceiveSuccessContent(
     onDone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val primary = MaterialTheme.colorScheme.primary
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+
+    // Animation progress: 0 → 1 over ~1.6s
+    val animProgress = remember { Animatable(0f) }
+    // Checkmark fade-in after rings finish
+    val checkAlpha = remember { Animatable(0f) }
+    // Text + button fade-in
+    val contentAlpha = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        // Phase 1: Rings radiate out (0 → 1)
+        animProgress.animateTo(1f, tween(1600, easing = LinearEasing))
+        // Phase 2: Checkmark fades in
+        checkAlpha.animateTo(1f, tween(400, easing = FastOutSlowInEasing))
+        // Phase 3: Text and button
+        contentAlpha.animateTo(1f, tween(300, easing = FastOutSlowInEasing))
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -1045,22 +1068,98 @@ private fun ReceiveSuccessContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            Icons.Default.Check,
-            contentDescription = null,
-            modifier = Modifier
-                .size(64.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-                .padding(12.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
+        // Ring animation + checkmark occupy the same centered space
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(200.dp)
+        ) {
+            // Concentric rings radiating outward
+            Canvas(modifier = Modifier.size(200.dp)) {
+                val cx = size.width / 2f
+                val cy = size.height / 2f
+                val maxRadius = size.width / 2f
+
+                // 4 rings, staggered in time like the wisp logo layers
+                val ringCount = 4
+                for (i in 0 until ringCount) {
+                    // Each ring starts at a staggered offset
+                    val stagger = i * 0.15f
+                    val ringProgress = ((animProgress.value - stagger) / (1f - stagger))
+                        .coerceIn(0f, 1f)
+
+                    if (ringProgress <= 0f) continue
+
+                    // Ring expands from core (10%) to full radius
+                    val radius = maxRadius * (0.1f + ringProgress * 0.9f)
+
+                    // Fade: appear, peak, then fade out
+                    val alpha = if (ringProgress < 0.3f) {
+                        ringProgress / 0.3f  // fade in
+                    } else {
+                        1f - ((ringProgress - 0.3f) / 0.7f)  // fade out
+                    }.coerceIn(0f, 1f)
+
+                    // Outer rings are thinner and more transparent
+                    val baseAlpha = 1f - (i * 0.2f)
+                    val strokeWidth = (4f - i * 0.6f).coerceAtLeast(1.5f)
+
+                    drawCircle(
+                        color = primary.copy(alpha = alpha * baseAlpha * 0.8f),
+                        radius = radius,
+                        center = androidx.compose.ui.geometry.Offset(cx, cy),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(
+                            width = strokeWidth * density
+                        )
+                    )
+                }
+
+                // Glowing core dot that shrinks as rings expand
+                val coreAlpha = (1f - animProgress.value).coerceIn(0f, 1f)
+                if (coreAlpha > 0f) {
+                    // Outer glow
+                    drawCircle(
+                        color = primary.copy(alpha = coreAlpha * 0.3f),
+                        radius = 24f,
+                        center = androidx.compose.ui.geometry.Offset(cx, cy)
+                    )
+                    // Bright core
+                    drawCircle(
+                        color = primary.copy(alpha = coreAlpha),
+                        radius = 10f,
+                        center = androidx.compose.ui.geometry.Offset(cx, cy)
+                    )
+                    // Hot center
+                    drawCircle(
+                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = coreAlpha),
+                        radius = 4f,
+                        center = androidx.compose.ui.geometry.Offset(cx, cy)
+                    )
+                }
+            }
+
+            // Checkmark circle fades in at the same center position
+            if (checkAlpha.value > 0f) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            primaryContainer.copy(alpha = checkAlpha.value),
+                            CircleShape
+                        )
+                        .padding(12.dp),
+                    tint = primary.copy(alpha = checkAlpha.value)
+                )
+            }
+        }
 
         Spacer(Modifier.height(24.dp))
 
         Text(
             "Payment Received",
             style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha.value)
         )
 
         Spacer(Modifier.height(8.dp))
@@ -1068,13 +1167,15 @@ private fun ReceiveSuccessContent(
         Text(
             "%,d sats".format(amountSats),
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = primary.copy(alpha = contentAlpha.value)
         )
 
         Spacer(Modifier.height(32.dp))
 
-        Button(onClick = onDone) {
-            Text("Done")
+        if (contentAlpha.value > 0.5f) {
+            Button(onClick = onDone) {
+                Text("Done")
+            }
         }
     }
 }
