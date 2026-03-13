@@ -7,8 +7,14 @@ import com.wisp.app.nostr.ClientMessage
 import com.wisp.app.nostr.Filter
 import com.wisp.app.nostr.LocalSigner
 import com.wisp.app.nostr.Nip57
+import com.wisp.app.nostr.Nip78
 import com.wisp.app.nostr.NostrEvent
+import com.wisp.app.nostr.NostrSigner
+import com.wisp.app.nostr.RemoteSigner
 import com.wisp.app.nostr.toHex
+import android.content.ContentResolver
+import com.wisp.app.relay.RelayEvent
+import com.wisp.app.repo.SigningMode
 import com.wisp.app.repo.EventRepository
 import com.wisp.app.repo.KeyRepository
 import com.wisp.app.repo.NwcRepository
@@ -29,6 +35,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
@@ -37,6 +44,37 @@ sealed class WalletState {
     object Connecting : WalletState()
     data class Connected(val balanceMsats: Long) : WalletState()
     data class Error(val message: String) : WalletState()
+}
+
+sealed class BackupStatus {
+    object None : BackupStatus()
+    object InProgress : BackupStatus()
+    object Success : BackupStatus()
+    data class Error(val message: String) : BackupStatus()
+}
+
+sealed class RestoreFromRelayStatus {
+    object Idle : RestoreFromRelayStatus()
+    object Searching : RestoreFromRelayStatus()
+    data class Found(val mnemonic: String, val walletId: String?, val createdAt: Long) : RestoreFromRelayStatus()
+    object NotFound : RestoreFromRelayStatus()
+    data class Error(val message: String) : RestoreFromRelayStatus()
+}
+
+data class RelayBackupInfo(val relayUrl: String, val hasBackup: Boolean)
+
+sealed class DeleteBackupStatus {
+    object Idle : DeleteBackupStatus()
+    object InProgress : DeleteBackupStatus()
+    object Success : DeleteBackupStatus()
+    data class Error(val message: String) : DeleteBackupStatus()
+}
+
+sealed class AutoCheckState {
+    object Idle : AutoCheckState()
+    object Checking : AutoCheckState()
+    data class Found(val mnemonic: String, val walletId: String?, val createdAt: Long) : AutoCheckState()
+    object NotFound : AutoCheckState()
 }
 
 sealed class WalletPage {
@@ -64,6 +102,8 @@ sealed class WalletPage {
     object LightningAddressSetup : WalletPage()
     object LightningAddressQR : WalletPage()
     object DeleteWalletConfirm : WalletPage()
+    object BackupToRelay : WalletPage()
+    object RestoreFromRelay : WalletPage()
 }
 
 class WalletViewModel(
@@ -72,7 +112,8 @@ class WalletViewModel(
     val walletModeRepo: WalletModeRepository,
     val eventRepo: EventRepository,
     val relayPool: RelayPool,
-    val keyRepo: KeyRepository
+    val keyRepo: KeyRepository,
+    private val contentResolver: ContentResolver? = null
 ) : ViewModel() {
 
     private val _walletMode = MutableStateFlow(walletModeRepo.getMode())
@@ -158,6 +199,32 @@ class WalletViewModel(
     private val _showBioPrompt = MutableStateFlow(false)
     val showBioPrompt: StateFlow<Boolean> = _showBioPrompt
 
+    // Relay backup
+    private val _backupStatus = MutableStateFlow<BackupStatus>(BackupStatus.None)
+    val backupStatus: StateFlow<BackupStatus> = _backupStatus
+
+    private val _restoreFromRelayStatus = MutableStateFlow<RestoreFromRelayStatus>(RestoreFromRelayStatus.Idle)
+    val restoreFromRelayStatus: StateFlow<RestoreFromRelayStatus> = _restoreFromRelayStatus
+
+    // Seed backup acknowledgement
+    private val _seedBackupAcked = MutableStateFlow(sparkRepo.isSeedBackupAcknowledged())
+    val seedBackupAcked: StateFlow<Boolean> = _seedBackupAcked
+
+    // Auto-check for relay backup on SparkSetup entry
+    private val _autoCheckState = MutableStateFlow<AutoCheckState>(AutoCheckState.Idle)
+    val autoCheckState: StateFlow<AutoCheckState> = _autoCheckState
+
+    // Per-relay backup status
+    private val _relayBackupStatuses = MutableStateFlow<List<RelayBackupInfo>>(emptyList())
+    val relayBackupStatuses: StateFlow<List<RelayBackupInfo>> = _relayBackupStatuses
+
+    private val _relayBackupCheckLoading = MutableStateFlow(false)
+    val relayBackupCheckLoading: StateFlow<Boolean> = _relayBackupCheckLoading
+
+    // Delete relay backup
+    private val _deleteBackupStatus = MutableStateFlow<DeleteBackupStatus>(DeleteBackupStatus.Idle)
+    val deleteBackupStatus: StateFlow<DeleteBackupStatus> = _deleteBackupStatus
+
     private val _registeredAddress = MutableStateFlow<String?>(null)
 
     private var connectJob: Job? = null
@@ -167,6 +234,14 @@ class WalletViewModel(
     private val httpClient get() = com.wisp.app.relay.HttpClientFactory.createRelayClient()
 
     init {
+        // Wallet backup queries must bypass event dedup so the same event
+        // from multiple relays is emitted (needed for per-relay status tracking)
+        // and so events already seen earlier in the session are still returned.
+        relayPool.registerDedupBypass("relay-status-")
+        relayPool.registerDedupBypass("auto-check-")
+        relayPool.registerDedupBypass("wallet-backup-")
+        relayPool.registerDedupBypass("delete-backup-")
+
         val mode = walletModeRepo.getMode()
         when (mode) {
             WalletMode.NWC -> {
@@ -224,6 +299,10 @@ class WalletViewModel(
     fun navigateTo(page: WalletPage) {
         pageStack.add(page)
         _currentPage.value = page
+        // Auto-check relay backup statuses when entering Settings
+        if (page is WalletPage.Settings && _walletMode.value == WalletMode.SPARK && keyRepo.isLoggedIn()) {
+            checkRelayBackupStatuses()
+        }
     }
 
     fun navigateBack(): Boolean {
@@ -258,6 +337,86 @@ class WalletViewModel(
 
     fun selectSparkMode() {
         navigateTo(WalletPage.SparkSetup)
+        // Auto-check relays for existing backup if logged in
+        if (keyRepo.isLoggedIn()) {
+            autoCheckRelayBackup()
+        }
+    }
+
+    private fun autoCheckRelayBackup() {
+        val signer = buildSigner() ?: return
+        _autoCheckState.value = AutoCheckState.Checking
+        viewModelScope.launch {
+            try {
+                val pubkey = signer.pubkeyHex
+                val ts = System.currentTimeMillis()
+                val subId = "auto-check-$ts"
+                val filter = Nip78.backupFilter(pubkey)
+                val events = mutableListOf<NostrEvent>()
+                var eoseCount = 0
+                val relayCount = relayPool.getReadRelayUrls().size
+                val collectJob = launch {
+                    relayPool.relayEvents.collect { relayEvent: RelayEvent ->
+                        if (relayEvent.subscriptionId == subId) {
+                            events.add(relayEvent.event)
+                        }
+                    }
+                }
+                val eoseJob = launch {
+                    relayPool.eoseSignals.collect { id ->
+                        if (id == subId) eoseCount++
+                    }
+                }
+                yield() // ensure collectors are subscribed before sending REQ
+                relayPool.sendToReadRelays(ClientMessage.req(subId, filter))
+
+                // Wait for all relays to respond (or timeout)
+                withTimeoutOrNull(8_000) {
+                    while (eoseCount < relayCount) {
+                        delay(200)
+                    }
+                }
+                collectJob.cancel()
+                eoseJob.cancel()
+                relayPool.closeOnAllRelays(subId)
+
+                val best = events
+                    .filter { !Nip78.isDeletedBackup(it) }
+                    .sortedByDescending { it.created_at }
+                    .firstOrNull()
+
+                if (best == null) {
+                    _autoCheckState.value = AutoCheckState.NotFound
+                    return@launch
+                }
+
+                val mnemonic = withContext(Dispatchers.Default) {
+                    Nip78.decryptBackup(signer, best)
+                }
+                if (mnemonic != null) {
+                    _autoCheckState.value = AutoCheckState.Found(
+                        mnemonic = mnemonic,
+                        walletId = Nip78.extractWalletId(best),
+                        createdAt = best.created_at
+                    )
+                } else {
+                    _autoCheckState.value = AutoCheckState.NotFound
+                }
+            } catch (_: Exception) {
+                _autoCheckState.value = AutoCheckState.NotFound
+            }
+        }
+    }
+
+    fun restoreFromAutoCheck() {
+        val state = _autoCheckState.value
+        if (state !is AutoCheckState.Found) return
+        _autoCheckState.value = AutoCheckState.Idle
+        restoreSparkWallet(state.mnemonic)
+    }
+
+    fun dismissAutoCheck() {
+        _autoCheckState.value = AutoCheckState.Idle
     }
 
     // --- NWC Connection ---
@@ -303,9 +462,9 @@ class WalletViewModel(
 
     fun restoreSparkWallet(mnemonic: String = _restoreMnemonic.value) {
         val trimmed = mnemonic.trim().lowercase()
-        val words = trimmed.split("\\s+".toRegex())
-        if (words.size != 12 && words.size != 24) {
-            _sendError.value = "Mnemonic must be 12 or 24 words"
+        val validationError = sparkRepo.validateMnemonic(trimmed)
+        if (validationError != null) {
+            _sendError.value = validationError
             return
         }
         sparkRepo.saveMnemonic(trimmed)
@@ -337,6 +496,12 @@ class WalletViewModel(
     fun showMnemonicBackup() {
         val mnemonic = sparkRepo.getMnemonic() ?: return
         navigateTo(WalletPage.SparkBackup(mnemonic))
+    }
+
+    fun acknowledgeSeedBackup() {
+        sparkRepo.setSeedBackupAcknowledged(true)
+        _seedBackupAcked.value = true
+        navigateHome()
     }
 
     // --- Shared connection helpers ---
@@ -892,5 +1057,274 @@ class WalletViewModel(
     private fun stopSyncPolling() {
         syncPollJob?.cancel()
         syncPollJob = null
+    }
+
+    // --- Relay Backup / Restore ---
+
+    private fun buildSigner(): NostrSigner? {
+        return when (keyRepo.getSigningMode()) {
+            SigningMode.LOCAL -> {
+                val keypair = keyRepo.getKeypair() ?: return null
+                LocalSigner(keypair.privkey, keypair.pubkey)
+            }
+            SigningMode.REMOTE -> {
+                val pubkey = keyRepo.getPubkeyHex() ?: return null
+                val pkg = keyRepo.getSignerPackage() ?: return null
+                val cr = contentResolver ?: return null
+                RemoteSigner(pubkey, cr, pkg)
+            }
+            SigningMode.READ_ONLY -> null
+        }
+    }
+
+    fun backupToRelay() {
+        val mnemonic = sparkRepo.getMnemonic() ?: return
+        val signer = buildSigner() ?: run {
+            _backupStatus.value = BackupStatus.Error("No signing key available")
+            return
+        }
+
+        _backupStatus.value = BackupStatus.InProgress
+        viewModelScope.launch {
+            try {
+                val event = withContext(Dispatchers.Default) {
+                    Nip78.createBackupEvent(signer, mnemonic)
+                }
+                val msg = ClientMessage.event(event)
+                val sent = relayPool.sendToWriteRelays(msg)
+                if (sent > 0) {
+                    _backupStatus.value = BackupStatus.Success
+                    // Allow relays time to index the event, then refresh statuses
+                    delay(3_000)
+                    checkRelayBackupStatuses()
+                } else {
+                    _backupStatus.value = BackupStatus.Error("No relays accepted the backup")
+                }
+            } catch (e: Exception) {
+                _backupStatus.value = BackupStatus.Error(e.message ?: "Backup failed")
+            }
+        }
+    }
+
+    fun resetBackupStatus() {
+        _backupStatus.value = BackupStatus.None
+    }
+
+    fun searchRelayBackup() {
+        val signer = buildSigner() ?: run {
+            _restoreFromRelayStatus.value = RestoreFromRelayStatus.Error("No signing key available")
+            return
+        }
+
+        _restoreFromRelayStatus.value = RestoreFromRelayStatus.Searching
+        viewModelScope.launch {
+            try {
+                val pubkey = signer.pubkeyHex
+                val ts = System.currentTimeMillis()
+                val subId = "wallet-backup-$ts"
+                val filter = Nip78.backupFilter(pubkey)
+                // Collect events until all relays EOSE
+                val events = mutableListOf<NostrEvent>()
+                var eoseCount = 0
+                val relayCount = relayPool.getReadRelayUrls().size
+                val collectJob = launch {
+                    relayPool.relayEvents.collect { relayEvent: RelayEvent ->
+                        if (relayEvent.subscriptionId == subId) {
+                            events.add(relayEvent.event)
+                        }
+                    }
+                }
+                val eoseJob = launch {
+                    relayPool.eoseSignals.collect { id ->
+                        if (id == subId) eoseCount++
+                    }
+                }
+                yield() // ensure collectors are subscribed before sending REQ
+                relayPool.sendToReadRelays(ClientMessage.req(subId, filter))
+
+                // Wait for all relays to respond (or timeout)
+                withTimeoutOrNull(10_000) {
+                    while (eoseCount < relayCount) {
+                        delay(200)
+                    }
+                }
+                collectJob.cancel()
+                eoseJob.cancel()
+                relayPool.closeOnAllRelays(subId)
+
+                // Find the newest non-deleted backup
+                val best = events
+                    .filter { !Nip78.isDeletedBackup(it) }
+                    .sortedByDescending { it.created_at }
+                    .firstOrNull()
+
+                if (best == null) {
+                    _restoreFromRelayStatus.value = RestoreFromRelayStatus.NotFound
+                    return@launch
+                }
+
+                val mnemonic = withContext(Dispatchers.Default) {
+                    Nip78.decryptBackup(signer, best)
+                }
+                if (mnemonic != null) {
+                    _restoreFromRelayStatus.value = RestoreFromRelayStatus.Found(
+                        mnemonic = mnemonic,
+                        walletId = Nip78.extractWalletId(best),
+                        createdAt = best.created_at
+                    )
+                } else {
+                    _restoreFromRelayStatus.value = RestoreFromRelayStatus.NotFound
+                }
+            } catch (e: Exception) {
+                _restoreFromRelayStatus.value = RestoreFromRelayStatus.Error(e.message ?: "Search failed")
+            }
+        }
+    }
+
+    fun restoreFromRelayBackup() {
+        val status = _restoreFromRelayStatus.value
+        if (status !is RestoreFromRelayStatus.Found) return
+        restoreSparkWallet(status.mnemonic)
+    }
+
+    fun resetRestoreFromRelayStatus() {
+        _restoreFromRelayStatus.value = RestoreFromRelayStatus.Idle
+    }
+
+    // --- Relay Backup Status & Delete ---
+
+    fun checkRelayBackupStatuses() {
+        val mnemonic = sparkRepo.getMnemonic() ?: return
+        val pubkey = keyRepo.getPubkeyHex() ?: return
+
+        _relayBackupCheckLoading.value = true
+        viewModelScope.launch {
+            try {
+                val relayUrls = relayPool.getReadRelayUrls()
+                val filter = Nip78.backupFilterForDTag(pubkey, mnemonic)
+                val ts = System.currentTimeMillis()
+                val subId = "relay-status-$ts"
+
+                // Track which relays returned a valid backup
+                val relaysWithBackup = mutableSetOf<String>()
+                // Track EOSE count to know when all relays have responded
+                var eoseCount = 0
+                val relayCount = relayUrls.size
+
+                val collectJob = launch {
+                    relayPool.relayEvents.collect { relayEvent: RelayEvent ->
+                        if (relayEvent.subscriptionId == subId && !Nip78.isDeletedBackup(relayEvent.event)) {
+                            relaysWithBackup.add(relayEvent.relayUrl)
+                        }
+                    }
+                }
+
+                val eoseJob = launch {
+                    relayPool.eoseSignals.collect { id ->
+                        if (id == subId) eoseCount++
+                    }
+                }
+                yield() // ensure both collectors are subscribed before sending REQ
+
+                relayPool.sendToReadRelays(ClientMessage.req(subId, filter))
+
+                // Wait until all relays respond or timeout
+                withTimeoutOrNull(8_000) {
+                    while (eoseCount < relayCount) {
+                        delay(200)
+                    }
+                }
+                collectJob.cancel()
+                eoseJob.cancel()
+                relayPool.closeOnAllRelays(subId)
+
+                _relayBackupStatuses.value = relayUrls.map { url ->
+                    RelayBackupInfo(relayUrl = url, hasBackup = url in relaysWithBackup)
+                }
+            } catch (_: Exception) {
+                // Keep existing statuses on error
+            }
+            _relayBackupCheckLoading.value = false
+        }
+    }
+
+    fun deleteRelayBackup() {
+        val signer = buildSigner() ?: run {
+            _deleteBackupStatus.value = DeleteBackupStatus.Error("No signing key available")
+            return
+        }
+
+        _deleteBackupStatus.value = DeleteBackupStatus.InProgress
+        viewModelScope.launch {
+            try {
+                // Query relays for ALL backup events from this author
+                val pubkey = signer.pubkeyHex
+                val ts = System.currentTimeMillis()
+                val subId = "delete-backup-$ts"
+                val filter = Nip78.backupFilter(pubkey)
+
+                val events = mutableListOf<NostrEvent>()
+                var eoseCount = 0
+                val relayCount = relayPool.getReadRelayUrls().size
+                val collectJob = launch {
+                    relayPool.relayEvents.collect { relayEvent: RelayEvent ->
+                        if (relayEvent.subscriptionId == subId) {
+                            events.add(relayEvent.event)
+                        }
+                    }
+                }
+                val eoseJob = launch {
+                    relayPool.eoseSignals.collect { id ->
+                        if (id == subId) eoseCount++
+                    }
+                }
+                yield()
+                relayPool.sendToReadRelays(ClientMessage.req(subId, filter))
+
+                withTimeoutOrNull(8_000) {
+                    while (eoseCount < relayCount) {
+                        delay(200)
+                    }
+                }
+                collectJob.cancel()
+                eoseJob.cancel()
+                relayPool.closeOnAllRelays(subId)
+
+                // Tombstone every unique d-tag found (skip already-deleted ones)
+                val dTags = events
+                    .filter { !Nip78.isDeletedBackup(it) }
+                    .mapNotNull { Nip78.extractDTag(it) }
+                    .distinct()
+
+                if (dTags.isEmpty()) {
+                    _deleteBackupStatus.value = DeleteBackupStatus.Success
+                    _relayBackupStatuses.value = emptyList()
+                    return@launch
+                }
+
+                var totalSent = 0
+                for (dTag in dTags) {
+                    val tombstone = withContext(Dispatchers.Default) {
+                        Nip78.createDeleteEventForDTag(signer, dTag)
+                    }
+                    totalSent += relayPool.sendToAllRelays(ClientMessage.event(tombstone))
+                }
+
+                if (totalSent > 0) {
+                    _deleteBackupStatus.value = DeleteBackupStatus.Success
+                    // Allow relays time to index tombstones, then refresh statuses
+                    delay(3_000)
+                    checkRelayBackupStatuses()
+                } else {
+                    _deleteBackupStatus.value = DeleteBackupStatus.Error("No relays accepted the delete")
+                }
+            } catch (e: Exception) {
+                _deleteBackupStatus.value = DeleteBackupStatus.Error(e.message ?: "Delete failed")
+            }
+        }
+    }
+
+    fun resetDeleteBackupStatus() {
+        _deleteBackupStatus.value = DeleteBackupStatus.Idle
     }
 }

@@ -156,6 +156,7 @@ fun WispNavHost(
     val profileViewModel: ProfileViewModel = viewModel()
     val dmListViewModel: DmListViewModel = viewModel()
     val blossomServersViewModel: BlossomServersViewModel = viewModel()
+    val appContext = LocalContext.current.applicationContext
     val walletViewModel: WalletViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -166,7 +167,8 @@ fun WispNavHost(
                     feedViewModel.walletModeRepo,
                     feedViewModel.eventRepo,
                     feedViewModel.relayPool,
-                    feedViewModel.keyRepo
+                    feedViewModel.keyRepo,
+                    appContext.contentResolver
                 ) as T
             }
         }

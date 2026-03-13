@@ -137,6 +137,41 @@ class SparkRepository(
         return words.joinToString(" ")
     }
 
+    /** Validate a mnemonic: correct word count, all words in BIP39 wordlist, valid checksum. */
+    fun validateMnemonic(mnemonic: String): String? {
+        val words = mnemonic.trim().lowercase().split(Regex("\\s+"))
+        if (words.size !in listOf(12, 15, 18, 21, 24)) {
+            return "Recovery phrase must be 12, 15, 18, 21, or 24 words"
+        }
+        val wordlist = BIP39_WORDS
+        if (wordlist.size < 2048) return null // can't validate without wordlist
+        val invalid = words.filter { it !in wordlist }
+        if (invalid.isNotEmpty()) {
+            return "Invalid word${if (invalid.size > 1) "s" else ""}: ${invalid.take(3).joinToString(", ")}"
+        }
+        // Checksum validation
+        val indices = words.map { wordlist.indexOf(it) }
+        val bits = StringBuilder()
+        for (idx in indices) {
+            bits.append(String.format("%11s", Integer.toBinaryString(idx)).replace(' ', '0'))
+        }
+        val totalBits = words.size * 11
+        val checksumBits = totalBits / 33
+        val entropyBits = totalBits - checksumBits
+        val entropyBytes = ByteArray(entropyBits / 8)
+        for (i in entropyBytes.indices) {
+            entropyBytes[i] = Integer.parseInt(bits.substring(i * 8, i * 8 + 8), 2).toByte()
+        }
+        val hash = java.security.MessageDigest.getInstance("SHA-256").digest(entropyBytes)
+        val hashBits = String.format("%8s", Integer.toBinaryString(hash[0].toInt() and 0xFF)).replace(' ', '0')
+        val expectedChecksum = hashBits.substring(0, checksumBits)
+        val actualChecksum = bits.substring(entropyBits, entropyBits + checksumBits)
+        if (expectedChecksum != actualChecksum) {
+            return "Invalid recovery phrase (checksum mismatch)"
+        }
+        return null
+    }
+
     fun saveMnemonic(mnemonic: String) {
         encPrefs.edit().putString("spark_mnemonic", mnemonic).apply()
     }
@@ -144,9 +179,19 @@ class SparkRepository(
     fun getMnemonic(): String? = encPrefs.getString("spark_mnemonic", null)
 
     fun clearMnemonic() {
-        encPrefs.edit().remove("spark_mnemonic").apply()
+        encPrefs.edit()
+            .remove("spark_mnemonic")
+            .remove("seed_backup_acked")
+            .apply()
         _balance.value = null
         _isConnected.value = false
+    }
+
+    fun isSeedBackupAcknowledged(): Boolean =
+        encPrefs.getBoolean("seed_backup_acked", false)
+
+    fun setSeedBackupAcknowledged(acked: Boolean) {
+        encPrefs.edit().putBoolean("seed_backup_acked", acked).apply()
     }
 
     // --- SDK lifecycle ---

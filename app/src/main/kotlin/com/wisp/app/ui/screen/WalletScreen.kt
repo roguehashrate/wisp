@@ -123,6 +123,11 @@ import com.wisp.app.R
 import com.wisp.app.repo.WalletMode
 import com.wisp.app.repo.WalletTransaction
 import com.wisp.app.ui.component.SatsNumpad
+import com.wisp.app.viewmodel.AutoCheckState
+import com.wisp.app.viewmodel.BackupStatus
+import com.wisp.app.viewmodel.DeleteBackupStatus
+import com.wisp.app.viewmodel.RelayBackupInfo
+import com.wisp.app.viewmodel.RestoreFromRelayStatus
 import com.wisp.app.viewmodel.WalletPage
 import com.wisp.app.viewmodel.WalletState
 import com.wisp.app.viewmodel.WalletViewModel
@@ -165,43 +170,65 @@ fun WalletScreen(
             is WalletState.NotConnected,
             is WalletState.Connecting,
             is WalletState.Error -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    when (currentPage) {
-                        is WalletPage.NwcSetup -> WalletConnectionContent(
-                            walletState = walletState,
-                            connectionString = viewModel.connectionString.collectAsState().value,
-                            statusLines = viewModel.statusLines.collectAsState().value,
-                            onConnectionStringChange = { viewModel.updateConnectionString(it) },
-                            onConnect = { viewModel.connectNwcWallet() },
-                            onDisconnect = { viewModel.disconnectWallet() }
-                        )
-                        is WalletPage.SparkSetup -> SparkSetupContent(
-                            walletState = walletState,
-                            statusLines = viewModel.statusLines.collectAsState().value,
-                            restoreMnemonic = viewModel.restoreMnemonic.collectAsState().value,
-                            error = viewModel.sendError.collectAsState().value,
-                            onCreateWallet = { viewModel.generateSparkWallet() },
-                            onRestoreMnemonicChange = { viewModel.updateRestoreMnemonic(it) },
-                            onRestoreWallet = { viewModel.restoreSparkWallet() },
-                            onDisconnect = { viewModel.disconnectWallet() }
-                        )
-                        is WalletPage.SparkBackup -> {
-                            val page = currentPage as WalletPage.SparkBackup
-                            SparkBackupContent(
-                                mnemonic = page.mnemonic,
-                                onConfirm = { viewModel.confirmSparkBackup() }
+                // RestoreFromRelay has its own verticalScroll, so render it outside the scrolling Column
+                if (currentPage is WalletPage.RestoreFromRelay) {
+                    RestoreFromRelayContent(
+                        status = viewModel.restoreFromRelayStatus.collectAsState().value,
+                        onSearch = { viewModel.searchRelayBackup() },
+                        onRestore = { viewModel.restoreFromRelayBackup() },
+                        onCancel = {
+                            viewModel.resetRestoreFromRelayStatus()
+                            viewModel.navigateBack()
+                        },
+                        modifier = Modifier.padding(padding)
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        when (currentPage) {
+                            is WalletPage.NwcSetup -> WalletConnectionContent(
+                                walletState = walletState,
+                                connectionString = viewModel.connectionString.collectAsState().value,
+                                statusLines = viewModel.statusLines.collectAsState().value,
+                                onConnectionStringChange = { viewModel.updateConnectionString(it) },
+                                onConnect = { viewModel.connectNwcWallet() },
+                                onDisconnect = { viewModel.disconnectWallet() }
+                            )
+                            is WalletPage.SparkSetup -> SparkSetupContent(
+                                walletState = walletState,
+                                statusLines = viewModel.statusLines.collectAsState().value,
+                                restoreMnemonic = viewModel.restoreMnemonic.collectAsState().value,
+                                error = viewModel.sendError.collectAsState().value,
+                                autoCheckState = viewModel.autoCheckState.collectAsState().value,
+                                onCreateWallet = { viewModel.generateSparkWallet() },
+                                onRestoreMnemonicChange = { viewModel.updateRestoreMnemonic(it) },
+                                onRestoreWallet = { viewModel.restoreSparkWallet() },
+                                onRestoreFromRelay = {
+                                    viewModel.resetRestoreFromRelayStatus()
+                                    viewModel.navigateTo(WalletPage.RestoreFromRelay)
+                                },
+                                onRestoreFromAutoCheck = { viewModel.restoreFromAutoCheck() },
+                                onDismissAutoCheck = { viewModel.dismissAutoCheck() },
+                                isLoggedIn = viewModel.keyRepo.isLoggedIn(),
+                                onDisconnect = { viewModel.disconnectWallet() }
+                            )
+                            is WalletPage.SparkBackup -> {
+                                val page = currentPage as WalletPage.SparkBackup
+                                SparkBackupContent(
+                                    mnemonic = page.mnemonic,
+                                    onConfirm = { viewModel.confirmSparkBackup() }
+                                )
+                            }
+                            else -> WalletModeSelectionContent(
+                                onSelectNwc = { viewModel.selectNwcMode() },
+                                onSelectSpark = { viewModel.selectSparkMode() }
                             )
                         }
-                        else -> WalletModeSelectionContent(
-                            onSelectNwc = { viewModel.selectNwcMode() },
-                            onSelectSpark = { viewModel.selectSparkMode() }
-                        )
                     }
                 }
             }
@@ -219,13 +246,15 @@ fun WalletScreen(
                         ) {
                             SparkBackupContent(
                                 mnemonic = page.mnemonic,
-                                onConfirm = { viewModel.navigateHome() }
+                                onConfirm = { viewModel.acknowledgeSeedBackup() }
                             )
                         }
                     }
                     is WalletPage.Home -> WalletHomeContent(
                         balanceMsats = balanceMsats,
                         walletMode = viewModel.walletMode.collectAsState().value,
+                        showSettingsAlert = viewModel.walletMode.collectAsState().value == WalletMode.SPARK
+                                && !viewModel.seedBackupAcked.collectAsState().value,
                         onSend = { viewModel.navigateTo(WalletPage.SendInput) },
                         onReceive = {
                             viewModel.navigateTo(WalletPage.ReceiveAmount)
@@ -348,7 +377,17 @@ fun WalletScreen(
                         onShowAddressQR = { viewModel.navigateTo(WalletPage.LightningAddressQR) },
                         onDeleteAddress = { viewModel.deleteLightningAddress() },
                         onBackupMnemonic = { viewModel.showMnemonicBackup() },
+                        onBackupToRelay = {
+                            viewModel.resetBackupStatus()
+                            viewModel.navigateTo(WalletPage.BackupToRelay)
+                        },
                         onDeleteWallet = { viewModel.navigateTo(WalletPage.DeleteWalletConfirm) },
+                        relayBackupStatuses = viewModel.relayBackupStatuses.collectAsState().value,
+                        relayBackupCheckLoading = viewModel.relayBackupCheckLoading.collectAsState().value,
+                        deleteBackupStatus = viewModel.deleteBackupStatus.collectAsState().value,
+                        isLoggedIn = viewModel.keyRepo.isLoggedIn(),
+                        onCheckRelayBackups = { viewModel.checkRelayBackupStatuses() },
+                        onDeleteRelayBackup = { viewModel.deleteRelayBackup() },
                         modifier = Modifier.padding(padding)
                     )
                     is WalletPage.LightningAddressSetup -> LightningAddressSetupContent(
@@ -374,11 +413,32 @@ fun WalletScreen(
                         onCancel = { viewModel.navigateBack() },
                         modifier = Modifier.padding(padding)
                     )
+                    is WalletPage.BackupToRelay -> BackupToRelayContent(
+                        backupStatus = viewModel.backupStatus.collectAsState().value,
+                        onBackup = { viewModel.backupToRelay() },
+                        onDone = {
+                            viewModel.resetBackupStatus()
+                            viewModel.navigateBack()
+                        },
+                        modifier = Modifier.padding(padding)
+                    )
+                    is WalletPage.RestoreFromRelay -> RestoreFromRelayContent(
+                        status = viewModel.restoreFromRelayStatus.collectAsState().value,
+                        onSearch = { viewModel.searchRelayBackup() },
+                        onRestore = { viewModel.restoreFromRelayBackup() },
+                        onCancel = {
+                            viewModel.resetRestoreFromRelayStatus()
+                            viewModel.navigateBack()
+                        },
+                        modifier = Modifier.padding(padding)
+                    )
                     else -> {
                         // ModeSelection, NwcSetup, SparkSetup — shouldn't appear while connected
                         WalletHomeContent(
                             balanceMsats = balanceMsats,
                             walletMode = viewModel.walletMode.collectAsState().value,
+                            showSettingsAlert = viewModel.walletMode.collectAsState().value == WalletMode.SPARK
+                                    && !viewModel.seedBackupAcked.collectAsState().value,
                             onSend = { viewModel.navigateTo(WalletPage.SendInput) },
                             onReceive = { viewModel.navigateTo(WalletPage.ReceiveAmount) },
                             onTransactions = {
@@ -554,6 +614,7 @@ private fun WalletConnectionContent(
 private fun WalletHomeContent(
     balanceMsats: Long,
     walletMode: WalletMode = WalletMode.NWC,
+    showSettingsAlert: Boolean = false,
     onSend: () -> Unit,
     onReceive: () -> Unit,
     onTransactions: () -> Unit,
@@ -585,11 +646,21 @@ private fun WalletHomeContent(
                 )
             }
             IconButton(onClick = onSettings) {
-                Icon(
-                    Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Box {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (showSettingsAlert) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(Color(0xFFD32F2F), CircleShape)
+                                .align(Alignment.TopEnd)
+                        )
+                    }
+                }
             }
         }
 
@@ -1854,9 +1925,14 @@ private fun SparkSetupContent(
     statusLines: List<String>,
     restoreMnemonic: String,
     error: String?,
+    autoCheckState: AutoCheckState = AutoCheckState.Idle,
     onCreateWallet: () -> Unit,
     onRestoreMnemonicChange: (String) -> Unit,
     onRestoreWallet: () -> Unit,
+    onRestoreFromRelay: () -> Unit = {},
+    onRestoreFromAutoCheck: () -> Unit = {},
+    onDismissAutoCheck: () -> Unit = {},
+    isLoggedIn: Boolean = false,
     onDisconnect: () -> Unit
 ) {
     val isConnecting = walletState is WalletState.Connecting
@@ -1877,7 +1953,81 @@ private fun SparkSetupContent(
 
     Spacer(Modifier.height(24.dp))
 
-    if (!isConnecting) {
+    // Auto-check states
+    when (autoCheckState) {
+        is AutoCheckState.Checking -> {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        "Checking for existing backup...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+        is AutoCheckState.Found -> {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "Existing wallet found",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    val words = autoCheckState.mnemonic.split(" ")
+                    Text(
+                        "${words.size}-word recovery phrase",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                    if (autoCheckState.walletId != null) {
+                        Text(
+                            "Wallet ID: ${autoCheckState.walletId}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Button(
+                        onClick = onRestoreFromAutoCheck,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Restore This Wallet")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = onDismissAutoCheck,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Create New Instead")
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+        else -> {} // Idle or NotFound — show normal UI below
+    }
+
+    if (!isConnecting && autoCheckState !is AutoCheckState.Found) {
         Button(
             onClick = onCreateWallet,
             modifier = Modifier.fillMaxWidth()
@@ -1922,6 +2072,21 @@ private fun SparkSetupContent(
             enabled = restoreMnemonic.isNotBlank()
         ) {
             Text("Restore Wallet")
+        }
+
+        if (isLoggedIn) {
+            Spacer(Modifier.height(16.dp))
+
+            HorizontalDivider()
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = onRestoreFromRelay,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Restore from Nostr Relay")
+            }
         }
     }
 
@@ -2050,7 +2215,14 @@ private fun WalletSettingsContent(
     onShowAddressQR: () -> Unit,
     onDeleteAddress: () -> Unit = {},
     onBackupMnemonic: () -> Unit,
+    onBackupToRelay: () -> Unit = {},
     onDeleteWallet: () -> Unit,
+    relayBackupStatuses: List<RelayBackupInfo> = emptyList(),
+    relayBackupCheckLoading: Boolean = false,
+    deleteBackupStatus: DeleteBackupStatus = DeleteBackupStatus.Idle,
+    isLoggedIn: Boolean = false,
+    onCheckRelayBackups: () -> Unit = {},
+    onDeleteRelayBackup: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val clipboardManager = LocalClipboardManager.current
@@ -2178,6 +2350,148 @@ private fun WalletSettingsContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Backup Recovery Phrase")
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = onBackupToRelay,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Backup to Nostr Relays")
+            }
+
+            // Relay backup status section (when logged in)
+            if (isLoggedIn) {
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Relay Backup Status",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    IconButton(
+                        onClick = onCheckRelayBackups,
+                        enabled = !relayBackupCheckLoading
+                    ) {
+                        if (relayBackupCheckLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Check relay backups",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (relayBackupStatuses.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            relayBackupStatuses.forEach { info ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(
+                                                if (info.hasBackup) Color(0xFF4CAF50) else Color(0xFF9E9E9E),
+                                                CircleShape
+                                            )
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        info.relayUrl.removePrefix("wss://").removePrefix("ws://"),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    var showDeleteDialog by remember { mutableStateOf(false) }
+
+                    TextButton(
+                        onClick = { showDeleteDialog = true },
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFD32F2F)),
+                        enabled = deleteBackupStatus !is DeleteBackupStatus.InProgress
+                    ) {
+                        if (deleteBackupStatus is DeleteBackupStatus.InProgress) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = Color(0xFFD32F2F)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text("Delete Relay Backup")
+                    }
+
+                    if (deleteBackupStatus is DeleteBackupStatus.Success) {
+                        Text(
+                            "Backup deleted",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else if (deleteBackupStatus is DeleteBackupStatus.Error) {
+                        Text(
+                            deleteBackupStatus.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    if (showDeleteDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDeleteDialog = false },
+                            title = { Text("Delete Relay Backup?") },
+                            text = {
+                                Text("This will publish a tombstone event to your relays, marking the backup as deleted. Make sure you have your recovery phrase saved elsewhere.")
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        showDeleteDialog = false
+                                        onDeleteRelayBackup()
+                                    },
+                                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFD32F2F))
+                                ) {
+                                    Text("Delete")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showDeleteDialog = false }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
 
@@ -2615,6 +2929,331 @@ private fun DeleteWalletConfirmContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Cancel")
+        }
+
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+// --- Backup to Relay ---
+
+@Composable
+private fun BackupToRelayContent(
+    backupStatus: BackupStatus,
+    onBackup: () -> Unit,
+    onDone: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.height(32.dp))
+
+        Text(
+            "Backup to Nostr Relays",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            "Encrypt your wallet recovery phrase with NIP-44 and publish it to your Nostr relays. Only you can decrypt it with your Nostr private key.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
+        ) {
+            Text(
+                "Your mnemonic is encrypted to your own public key using NIP-44. Relay operators cannot read it. Compatible with other Spark wallet apps.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        when (backupStatus) {
+            is BackupStatus.None -> {
+                Button(
+                    onClick = onBackup,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Backup Now")
+                }
+            }
+            is BackupStatus.InProgress -> {
+                CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Encrypting and publishing...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            is BackupStatus.Success -> {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            CircleShape
+                        )
+                        .padding(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    "Backup complete",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    "Your wallet has been encrypted and published to your Nostr relays.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                Button(
+                    onClick = onDone,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Done")
+                }
+            }
+            is BackupStatus.Error -> {
+                Text(
+                    backupStatus.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(
+                    onClick = onBackup,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Try Again")
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onDone,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel")
+                }
+            }
+        }
+
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+// --- Restore from Relay ---
+
+@Composable
+private fun RestoreFromRelayContent(
+    status: RestoreFromRelayStatus,
+    onSearch: () -> Unit,
+    onRestore: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.height(32.dp))
+
+        Text(
+            "Restore from Nostr Relay",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            "Search your Nostr relays for an encrypted wallet backup. The backup will be decrypted with your Nostr private key.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        when (status) {
+            is RestoreFromRelayStatus.Idle -> {
+                Button(
+                    onClick = onSearch,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Search Relays")
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel")
+                }
+            }
+            is RestoreFromRelayStatus.Searching -> {
+                CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Searching relays for backup...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            is RestoreFromRelayStatus.Found -> {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            CircleShape
+                        )
+                        .padding(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    "Backup found!",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                val words = status.mnemonic.split(" ")
+                Text(
+                    "${words.size}-word recovery phrase",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (status.walletId != null) {
+                    Text(
+                        "Wallet ID: ${status.walletId}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Text(
+                    "Backed up: ${formatRelativeTime(status.createdAt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                Button(
+                    onClick = onRestore,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Restore This Wallet")
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel")
+                }
+            }
+            is RestoreFromRelayStatus.NotFound -> {
+                Text(
+                    "No wallet backup found on your relays.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(
+                    onClick = onSearch,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Search Again")
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel")
+                }
+            }
+            is RestoreFromRelayStatus.Error -> {
+                Text(
+                    status.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(
+                    onClick = onSearch,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Try Again")
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel")
+                }
+            }
         }
 
         Spacer(Modifier.height(32.dp))
