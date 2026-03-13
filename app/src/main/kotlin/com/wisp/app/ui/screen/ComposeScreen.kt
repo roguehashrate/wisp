@@ -21,6 +21,10 @@ import androidx.compose.foundation.content.hasMediaType
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -85,7 +89,7 @@ import com.wisp.app.relay.RelayPool
 import com.wisp.app.repo.EventRepository
 import com.wisp.app.repo.MentionCandidate
 import com.wisp.app.repo.ProfileRepository
-import com.wisp.app.ui.component.ComposeHighlightTransformation
+import com.wisp.app.ui.component.MentionOutputTransformation
 import com.wisp.app.ui.component.ProfilePicture
 import com.wisp.app.ui.component.RichContent
 import com.wisp.app.viewmodel.ComposeViewModel
@@ -144,12 +148,10 @@ fun ComposeScreen(
         if (uris.isNotEmpty()) viewModel.uploadMedia(uris, context.contentResolver, signer)
     }
 
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val highlightTransformation = remember(profileRepo, primaryColor) {
-        ComposeHighlightTransformation(
-            linkColor = primaryColor,
+    val outputTransformation = remember(profileRepo) {
+        MentionOutputTransformation(
             resolveDisplayName = { bech32 ->
-                if (profileRepo == null) return@ComposeHighlightTransformation null
+                if (profileRepo == null) return@MentionOutputTransformation null
                 try {
                     val data = Nip19.decodeNostrUri("nostr:$bech32")
                     if (data is com.wisp.app.nostr.NostrUriData.ProfileRef) {
@@ -316,13 +318,34 @@ fun ComposeScreen(
                     }
                 }
 
-                // Text field with mention/hashtag highlighting
+                // Text field with GIF keyboard support via BasicTextField(TextFieldState)
+                val textFieldState = remember { TextFieldState(content.text) }
                 val interactionSource = remember { MutableInteractionSource() }
                 val enabled = !publishing && countdownSeconds == null
 
+                // Sync ViewModel → TextFieldState (for programmatic updates: upload URL, mention select, etc.)
+                LaunchedEffect(content) {
+                    if (textFieldState.text.toString() != content.text) {
+                        textFieldState.edit {
+                            replace(0, length, content.text)
+                            selection = content.selection
+                        }
+                    }
+                }
+
+                // Sync TextFieldState → ViewModel (for user typing)
+                LaunchedEffect(textFieldState) {
+                    snapshotFlow {
+                        textFieldState.text.toString() to textFieldState.selection
+                    }.collect { (text, selection) ->
+                        if (text != content.text) {
+                            viewModel.updateContent(TextFieldValue(text, selection))
+                        }
+                    }
+                }
+
                 BasicTextField(
-                    value = content,
-                    onValueChange = { viewModel.updateContent(it) },
+                    state = textFieldState,
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -345,15 +368,14 @@ fun ComposeScreen(
                         }),
                     enabled = enabled,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    maxLines = Int.MAX_VALUE,
-                    visualTransformation = highlightTransformation,
+                    lineLimits = TextFieldLineLimits.MultiLine(),
+                    outputTransformation = outputTransformation,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                         color = MaterialTheme.colorScheme.onSurface
                     ),
-                    interactionSource = interactionSource,
-                    decorationBox = { innerTextField ->
+                    decorator = { innerTextField ->
                         OutlinedTextFieldDefaults.DecorationBox(
-                            value = content.text,
+                            value = textFieldState.text.toString(),
                             innerTextField = innerTextField,
                             enabled = enabled,
                             singleLine = false,
