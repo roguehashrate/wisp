@@ -104,7 +104,7 @@ class RemoteSigner(
 
         cursor.use {
             if (!it.moveToFirst()) return@withContext null
-            if (it.getColumnIndex("rejected") >= 0) return@withContext null
+            if (it.getColumnIndex("rejected") >= 0) throw SignerRejectedException("Signer rejected SIGN_EVENT kind=${unsigned.kind}")
 
             val eventIdx = it.getColumnIndex("event")
             if (eventIdx >= 0) {
@@ -134,7 +134,7 @@ class RemoteSigner(
 
         cursor.use {
             if (!it.moveToFirst()) return@withContext null
-            if (it.getColumnIndex("rejected") >= 0) return@withContext null
+            if (it.getColumnIndex("rejected") >= 0) throw SignerRejectedException("Signer rejected $method")
 
             val resIdx = it.getColumnIndex("result")
             if (resIdx >= 0) return@withContext it.getString(resIdx)
