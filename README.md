@@ -60,13 +60,18 @@ Wisp implements a full outbox/inbox model with relay scoring:
 - DM relay sets (NIP-51 kind 10050) allow separate relay infrastructure for private messaging
 - Blossom media uploads distribute content across decentralized media servers instead of centralized CDNs
 
-### NWC Wallet Integration
+### Lightning Wallet
 
-- Full [NIP-47](https://github.com/nostr-protocol/nips/blob/master/47.md) Nostr Wallet Connect support
-- Connect any NWC-compatible Lightning wallet via `nostr+walletconnect://` URI
-- Check balance, pay invoices, and create invoices directly from the app
-- Send Lightning zaps to posts with optional messages
-- Zap receipt tracking and display on the feed
+Wisp includes a built-in non-custodial Lightning wallet powered by [Breez SDK (Spark)](https://github.com/niclas9/breez-sdk-spark), with NWC as an alternative:
+
+- **Embedded Spark wallet**: Self-custodial Lightning node that runs on-device — no external wallet app needed
+- **Seed phrase backup**: 12-word mnemonic for wallet recovery on any device
+- **Encrypted relay backup**: Back up wallet credentials to your Nostr relays, encrypted with your private key, and restore from any session
+- **NWC support**: Alternatively connect any [NIP-47](https://github.com/nostr-protocol/nips/blob/master/47.md) compatible wallet via `nostr+walletconnect://` URI
+- **Lightning address**: Set up and share a reusable Lightning address for receiving payments
+- **Transaction history**: Paginated transaction list with counterparty resolution from zap receipts
+- **QR code scanning**: Scan or import QR codes to pay Lightning invoices
+- **Zaps**: Send Lightning zaps to posts with optional messages, with zap receipt tracking on the feed
 
 ### Blossom Media Support
 
@@ -353,6 +358,7 @@ Found a bug or have a feature request? [Open an issue](../../issues) with:
 | Serialization | kotlinx.serialization |
 | Cryptography | secp256k1-kmp (Schnorr), Bouncy Castle (XChaCha20), Android Security Crypto (AES-GCM) |
 | Navigation | Jetpack Navigation Compose |
+| Lightning | Breez SDK Spark |
 | Media | Media3 / ExoPlayer |
 | QR Codes | ZXing |
 | Build | Gradle 8.7 / AGP 8.7 |
