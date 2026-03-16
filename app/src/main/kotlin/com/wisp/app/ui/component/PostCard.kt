@@ -848,27 +848,16 @@ private fun PollResultRow(
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 600),
         label = "pollBar"
     )
-    val barColor = if (isUserChoice)
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
-    else
-        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
-    val borderColor = if (isUserChoice)
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-    else
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+    val barColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp)
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(8.dp)
-            )
             .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
     ) {
-        // Filled bar background
+        // Filled bar — primary color for all options
         Box(
             modifier = Modifier
                 .fillMaxWidth(fraction = animatedFraction)
