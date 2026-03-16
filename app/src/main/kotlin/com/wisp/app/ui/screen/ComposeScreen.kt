@@ -105,7 +105,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.animation.animateContentSize
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Tag
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedTextField
+import com.wisp.app.nostr.Nip88
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
@@ -136,6 +140,9 @@ fun ComposeScreen(
     val explicit by viewModel.explicit.collectAsState()
     val hashtags by viewModel.hashtags.collectAsState()
     val powEnabled by viewModel.powEnabled.collectAsState()
+    val pollEnabled by viewModel.pollEnabled.collectAsState()
+    val pollOptions by viewModel.pollOptions.collectAsState()
+    val pollType by viewModel.pollType.collectAsState()
     val powStatus = powManager?.status?.collectAsState()?.value ?: PowStatus.Idle
     val isMiningBusy = powStatus is PowStatus.Mining
     val context = LocalContext.current
@@ -421,6 +428,15 @@ fun ComposeScreen(
                         )
                     }
 
+                    IconButton(onClick = { viewModel.togglePoll() }) {
+                        Icon(
+                            Icons.Outlined.BarChart,
+                            contentDescription = "Add poll",
+                            tint = if (pollEnabled) MaterialTheme.colorScheme.primary
+                                   else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
                     if (uploadProgress != null) {
                         Spacer(Modifier.width(8.dp))
                         CircularProgressIndicator(
@@ -489,6 +505,68 @@ fun ComposeScreen(
                     }
                 }
 
+                // Poll editor
+                AnimatedVisibility(
+                    visible = pollEnabled,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        pollOptions.forEachIndexed { index, option ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = option,
+                                    onValueChange = { viewModel.updatePollOption(index, it) },
+                                    label = { Text("Option ${index + 1}") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (pollOptions.size > 2) {
+                                    IconButton(
+                                        onClick = { viewModel.removePollOption(index) },
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Close,
+                                            contentDescription = "Remove option",
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            if (pollOptions.size < 10) {
+                                TextButton(onClick = { viewModel.addPollOption() }) {
+                                    Text("+ Add option")
+                                }
+                            }
+                            Spacer(Modifier.weight(1f))
+                            FilterChip(
+                                selected = pollType == Nip88.PollType.MULTIPLECHOICE,
+                                onClick = { viewModel.togglePollType() },
+                                label = {
+                                    Text(
+                                        if (pollType == Nip88.PollType.SINGLECHOICE) "Single choice"
+                                        else "Multiple choice"
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+
                 // NSFW feedback banner
                 AnimatedVisibility(
                     visible = explicit,
@@ -524,7 +602,7 @@ fun ComposeScreen(
 
                 // Live preview
                 AnimatedVisibility(
-                    visible = !imeVisible && content.text.isNotBlank() && eventRepo != null
+                    visible = !imeVisible && (content.text.isNotBlank() || (pollEnabled && pollOptions.any { it.isNotBlank() })) && eventRepo != null
                 ) {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
@@ -564,6 +642,46 @@ fun ComposeScreen(
                                 content = content.text,
                                 eventRepo = eventRepo
                             )
+                            // Poll preview
+                            if (pollEnabled) {
+                                val previewOptions = pollOptions.filter { it.isNotBlank() }
+                                if (previewOptions.isNotEmpty()) {
+                                    Spacer(Modifier.height(6.dp))
+                                    previewOptions.forEachIndexed { index, label ->
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 2.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+                                            ) {
+                                                Text(
+                                                    text = if (pollType == Nip88.PollType.SINGLECHOICE) "○" else "☐",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                Spacer(Modifier.width(8.dp))
+                                                Text(
+                                                    text = label,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Text(
+                                        text = if (pollType == Nip88.PollType.SINGLECHOICE) "Single choice poll"
+                                               else "Multiple choice poll",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

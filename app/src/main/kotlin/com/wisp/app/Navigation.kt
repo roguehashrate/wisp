@@ -905,7 +905,8 @@ fun WispNavHost(
                 translationRepo = feedViewModel.translationRepo,
                 onArticleClick = { kind, articleAuthor, articleDTag ->
                     navController.navigate("article/$kind/$articleAuthor/${java.net.URLEncoder.encode(articleDTag, "UTF-8")}")
-                }
+                },
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
             )
         }
 
@@ -947,7 +948,8 @@ fun WispNavHost(
                 listedIds = searchListedIds,
                 onAddToList = { eventId -> addToListEventId = eventId },
                 onDeleteEvent = { eventId, kind -> feedViewModel.deleteEvent(eventId, kind) },
-                translationRepo = feedViewModel.translationRepo
+                translationRepo = feedViewModel.translationRepo,
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
             )
         }
 
@@ -1133,7 +1135,8 @@ fun WispNavHost(
                 translationRepo = feedViewModel.translationRepo,
                 resolvedEmojis = threadResolvedEmojis,
                 unicodeEmojis = threadUnicodeEmojis,
-                onOpenEmojiLibrary = { showThreadEmojiLibrary = true }
+                onOpenEmojiLibrary = { showThreadEmojiLibrary = true },
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
             )
 
             if (showThreadEmojiLibrary) {
@@ -1221,7 +1224,8 @@ fun WispNavHost(
                 },
                 nip05Repo = feedViewModel.nip05Repo,
                 translationRepo = feedViewModel.translationRepo,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
             )
         }
 
@@ -1620,7 +1624,8 @@ fun WispNavHost(
                 onRemoveBookmark = { eventId -> feedViewModel.removeBookmark(eventId) },
                 onToggleFollow = { pubkey -> feedViewModel.toggleFollow(pubkey) },
                 onBlockUser = { pubkey -> feedViewModel.blockUser(pubkey) },
-                translationRepo = feedViewModel.translationRepo
+                translationRepo = feedViewModel.translationRepo,
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
             )
         }
 
@@ -1859,7 +1864,8 @@ fun WispNavHost(
                 onOpenEmojiLibrary = { showNotifEmojiLibrary = true },
                 zapError = feedViewModel.zapError,
                 onRefresh = { feedViewModel.refreshDmsAndNotifications() },
-                translationRepo = feedViewModel.translationRepo
+                translationRepo = feedViewModel.translationRepo,
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
             )
 
             if (showNotifEmojiLibrary) {

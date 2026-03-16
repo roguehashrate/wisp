@@ -42,12 +42,14 @@ fun BookmarksScreen(
     onRemoveBookmark: ((String) -> Unit)? = null,
     onToggleFollow: (String) -> Unit = {},
     onBlockUser: (String) -> Unit = {},
-    translationRepo: TranslationRepository? = null
+    translationRepo: TranslationRepository? = null,
+    onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     val profileVersion by eventRepo.profileVersion.collectAsState()
     val reactionVersion by eventRepo.reactionVersion.collectAsState()
     val eventCacheVersion by eventRepo.eventCacheVersion.collectAsState()
     val translationVersion by translationRepo?.version?.collectAsState() ?: remember { mutableStateOf(0) }
+    val pollVoteVersion by eventRepo.pollVoteVersion.collectAsState()
 
     val events = remember(bookmarkedIds, profileVersion, eventCacheVersion) {
         bookmarkedIds.mapNotNull { id -> eventRepo.getEvent(id) }
@@ -102,6 +104,15 @@ fun BookmarksScreen(
                     val translationState = remember(translationVersion, event.id) {
                         translationRepo?.getState(event.id) ?: com.wisp.app.repo.TranslationState()
                     }
+                    val bmPollVoteCounts = remember(pollVoteVersion, event.id) {
+                        if (event.kind == 1068) eventRepo.getPollVoteCounts(event.id) else emptyMap()
+                    }
+                    val bmPollTotalVotes = remember(pollVoteVersion, event.id) {
+                        if (event.kind == 1068) eventRepo.getPollTotalVotes(event.id) else 0
+                    }
+                    val bmUserPollVotes = remember(pollVoteVersion, event.id) {
+                        if (event.kind == 1068) eventRepo.getUserPollVotes(event.id) else emptyList()
+                    }
                     PostCard(
                         event = event,
                         profile = profile,
@@ -118,7 +129,11 @@ fun BookmarksScreen(
                         onBlockAuthor = { onBlockUser(event.pubkey) },
                         isOwnEvent = event.pubkey == userPubkey,
                         translationState = translationState,
-                        onTranslate = { translationRepo?.translate(event.id, event.content) }
+                        onTranslate = { translationRepo?.translate(event.id, event.content) },
+                        pollVoteCounts = bmPollVoteCounts,
+                        pollTotalVotes = bmPollTotalVotes,
+                        userPollVotes = bmUserPollVotes,
+                        onPollVote = { optionIds -> onPollVote(event.id, optionIds) }
                     )
                 }
             }

@@ -144,7 +144,8 @@ fun UserProfileScreen(
     onSendDm: (() -> Unit)? = null,
     signer: com.wisp.app.nostr.NostrSigner? = null,
     translationRepo: TranslationRepository? = null,
-    onArticleClick: ((Int, String, String) -> Unit)? = null
+    onArticleClick: ((Int, String, String) -> Unit)? = null,
+    onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     val profile by viewModel.profile.collectAsState()
     val isFollowing by viewModel.isFollowing.collectAsState()
@@ -164,6 +165,7 @@ fun UserProfileScreen(
     val zapVersion by eventRepo?.zapVersion?.collectAsState() ?: remember { mutableIntStateOf(0) }
     val translationVersion by translationRepo?.version?.collectAsState() ?: remember { mutableIntStateOf(0) }
     val relaySourceVersion by eventRepo?.relaySourceVersion?.collectAsState() ?: remember { mutableIntStateOf(0) }
+    val pollVoteVersion by eventRepo?.pollVoteVersion?.collectAsState() ?: remember { mutableIntStateOf(0) }
 
     var zapTargetEvent by remember { mutableStateOf<NostrEvent?>(null) }
     var zapAnimatingIds by remember { mutableStateOf(emptySet<String>()) }
@@ -439,6 +441,15 @@ fun UserProfileScreen(
                             val pinnedTranslationState = remember(translationVersion, event.id) {
                                 translationRepo?.getState(event.id) ?: com.wisp.app.repo.TranslationState()
                             }
+                            val pinnedPollVoteCounts = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getPollVoteCounts(event.id) ?: emptyMap() else emptyMap()
+                            }
+                            val pinnedPollTotalVotes = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getPollTotalVotes(event.id) ?: 0 else 0
+                            }
+                            val pinnedUserPollVotes = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getUserPollVotes(event.id) ?: emptyList() else emptyList()
+                            }
                             PostCard(
                                 event = event,
                                 profile = eventProfile,
@@ -457,7 +468,11 @@ fun UserProfileScreen(
                                 onDelete = { onDeleteEvent(event.id, event.kind) },
                                 isOwnEvent = event.pubkey == userPubkey,
                                 translationState = pinnedTranslationState,
-                                onTranslate = { translationRepo?.translate(event.id, event.content) }
+                                onTranslate = { translationRepo?.translate(event.id, event.content) },
+                                pollVoteCounts = pinnedPollVoteCounts,
+                                pollTotalVotes = pinnedPollTotalVotes,
+                                userPollVotes = pinnedUserPollVotes,
+                                onPollVote = { optionIds -> onPollVote(event.id, optionIds) }
                             )
                         }
                     }
@@ -502,6 +517,15 @@ fun UserProfileScreen(
                             val rootTranslationState = remember(translationVersion, event.id) {
                                 translationRepo?.getState(event.id) ?: com.wisp.app.repo.TranslationState()
                             }
+                            val rootPollVoteCounts = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getPollVoteCounts(event.id) ?: emptyMap() else emptyMap()
+                            }
+                            val rootPollTotalVotes = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getPollTotalVotes(event.id) ?: 0 else 0
+                            }
+                            val rootUserPollVotes = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getUserPollVotes(event.id) ?: emptyList() else emptyList()
+                            }
                             PostCard(
                                 event = event,
                                 profile = if (repostPubkey != null) eventRepo?.getProfileData(event.pubkey) else profile,
@@ -540,7 +564,11 @@ fun UserProfileScreen(
                                 isPinned = event.id in pinnedIds,
                                 onDelete = { onDeleteEvent(event.id, event.kind) },
                                 translationState = rootTranslationState,
-                                onTranslate = { translationRepo?.translate(event.id, event.content) }
+                                onTranslate = { translationRepo?.translate(event.id, event.content) },
+                                pollVoteCounts = rootPollVoteCounts,
+                                pollTotalVotes = rootPollTotalVotes,
+                                userPollVotes = rootUserPollVotes,
+                                onPollVote = { optionIds -> onPollVote(event.id, optionIds) }
                             )
                         }
                         if (rootNotes.isNotEmpty()) {
@@ -579,6 +607,15 @@ fun UserProfileScreen(
                             val replyTranslationState = remember(translationVersion, event.id) {
                                 translationRepo?.getState(event.id) ?: com.wisp.app.repo.TranslationState()
                             }
+                            val replyPollVoteCounts = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getPollVoteCounts(event.id) ?: emptyMap() else emptyMap()
+                            }
+                            val replyPollTotalVotes = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getPollTotalVotes(event.id) ?: 0 else 0
+                            }
+                            val replyUserPollVotes = remember(pollVoteVersion, event.id) {
+                                if (event.kind == 1068) eventRepo?.getUserPollVotes(event.id) ?: emptyList() else emptyList()
+                            }
                             PostCard(
                                 event = event,
                                 profile = profile,
@@ -616,7 +653,11 @@ fun UserProfileScreen(
                                 isPinned = event.id in pinnedIds,
                                 onDelete = { onDeleteEvent(event.id, event.kind) },
                                 translationState = replyTranslationState,
-                                onTranslate = { translationRepo?.translate(event.id, event.content) }
+                                onTranslate = { translationRepo?.translate(event.id, event.content) },
+                                pollVoteCounts = replyPollVoteCounts,
+                                pollTotalVotes = replyPollTotalVotes,
+                                userPollVotes = replyUserPollVotes,
+                                onPollVote = { optionIds -> onPollVote(event.id, optionIds) }
                             )
                         }
                         item {

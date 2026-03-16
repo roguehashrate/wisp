@@ -85,7 +85,8 @@ fun ThreadScreen(
     translationRepo: TranslationRepository? = null,
     resolvedEmojis: Map<String, String> = emptyMap(),
     unicodeEmojis: List<String> = emptyList(),
-    onOpenEmojiLibrary: (() -> Unit)? = null
+    onOpenEmojiLibrary: (() -> Unit)? = null,
+    onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     val flatThread by viewModel.flatThread.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -128,6 +129,7 @@ fun ThreadScreen(
     val relaySourceVersion by eventRepo.relaySourceVersion.collectAsState()
     val nip05Version by nip05Repo?.version?.collectAsState() ?: remember { mutableIntStateOf(0) }
     val translationVersion by translationRepo?.version?.collectAsState() ?: remember { mutableIntStateOf(0) }
+    val pollVoteVersion by eventRepo.pollVoteVersion.collectAsState()
     val followList by contactRepo.followList.collectAsState()
 
     val noteActions = remember(userPubkey) {
@@ -202,6 +204,15 @@ fun ThreadScreen(
                         val translationState = remember(translationVersion, event.id) {
                             translationRepo?.getState(event.id) ?: com.wisp.app.repo.TranslationState()
                         }
+                        val pollVoteCounts = remember(pollVoteVersion, event.id) {
+                            if (event.kind == 1068) eventRepo.getPollVoteCounts(event.id) else emptyMap()
+                        }
+                        val pollTotalVotes = remember(pollVoteVersion, event.id) {
+                            if (event.kind == 1068) eventRepo.getPollTotalVotes(event.id) else 0
+                        }
+                        val userPollVotes = remember(pollVoteVersion, event.id) {
+                            if (event.kind == 1068) eventRepo.getUserPollVotes(event.id) else emptyList()
+                        }
                         PostCard(
                             event = event,
                             profile = profileData,
@@ -246,6 +257,10 @@ fun ThreadScreen(
                             noteActions = noteActions,
                             translationState = translationState,
                             onTranslate = { translationRepo?.translate(event.id, event.content) },
+                            pollVoteCounts = pollVoteCounts,
+                            pollTotalVotes = pollTotalVotes,
+                            userPollVotes = userPollVotes,
+                            onPollVote = { optionIds -> onPollVote(event.id, optionIds) },
                             modifier = Modifier.padding(start = (min(depth, 4) * 24).dp)
                         )
                     }
