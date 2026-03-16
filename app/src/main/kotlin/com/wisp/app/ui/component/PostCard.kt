@@ -851,7 +851,7 @@ private fun PollResultRow(
     val barColor = if (isUserChoice)
         MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
     else
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
     val borderColor = if (isUserChoice)
         MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
     else
@@ -895,7 +895,7 @@ private fun PollResultRow(
                 modifier = Modifier.weight(1f)
             )
             Text(
-                text = "${(percentage * 100).toInt()}%",
+                text = "${(percentage * 100).toInt()}% ($count)",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
