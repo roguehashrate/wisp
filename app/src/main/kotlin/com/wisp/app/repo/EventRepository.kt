@@ -941,6 +941,11 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
                     relayFeedBinaryInsert(event)
                 }
             }
+            Nip88.KIND_POLL -> {
+                eventCache.put(event.id, event)
+                relayHintStore?.extractHintsFromTags(event)
+                relayFeedBinaryInsert(event)
+            }
             30023 -> {
                 eventCache.put(event.id, event)
                 relayHintStore?.extractHintsFromTags(event)
@@ -987,6 +992,11 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
                     relayHintStore?.extractHintsFromTags(event)
                     trendingFeedAppend(event)
                 }
+            }
+            Nip88.KIND_POLL -> {
+                eventCache.put(event.id, event)
+                relayHintStore?.extractHintsFromTags(event)
+                trendingFeedAppend(event)
             }
             30023 -> {
                 eventCache.put(event.id, event)

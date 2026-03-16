@@ -8,6 +8,7 @@ import com.wisp.app.nostr.Nip17
 import com.wisp.app.nostr.Nip30
 import com.wisp.app.nostr.Nip51
 import com.wisp.app.nostr.Nip57
+import com.wisp.app.nostr.Nip88
 import com.wisp.app.nostr.Nip65
 import com.wisp.app.nostr.NostrEvent
 import com.wisp.app.nostr.NostrSigner
@@ -176,6 +177,7 @@ class EventRouter(
                 5 -> eventRepo.addEvent(event)
                 6 -> eventRepo.addEvent(event)
                 7 -> eventRepo.addEvent(event)
+                Nip88.KIND_POLL_RESPONSE -> eventRepo.addEvent(event)
                 9735 -> {
                     eventRepo.addEvent(event)
                     eventRepo.addEventRelay(event.id, relayUrl)
