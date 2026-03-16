@@ -84,7 +84,8 @@ fun SearchScreen(
     listedIds: Set<String> = emptySet(),
     onAddToList: (String) -> Unit = {},
     onDeleteEvent: (String, Int) -> Unit = { _, _ -> },
-    translationRepo: TranslationRepository? = null
+    translationRepo: TranslationRepository? = null,
+    onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     val query by viewModel.query.collectAsState()
     val filter by viewModel.filter.collectAsState()
@@ -219,6 +220,7 @@ fun SearchScreen(
                 else -> {
                     val translationVersion by translationRepo?.version?.collectAsState()
                         ?: remember { androidx.compose.runtime.mutableIntStateOf(0) }
+                    val pollVoteVersion by eventRepo.pollVoteVersion.collectAsState()
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         if (filter == SearchFilter.PEOPLE) {
                             val sortedUsers = users.sortedByDescending {
@@ -239,6 +241,15 @@ fun SearchScreen(
                                     translationRepo?.getState(event.id)
                                         ?: com.wisp.app.repo.TranslationState()
                                 }
+                                val searchPollVoteCounts = remember(pollVoteVersion, event.id) {
+                                    if (event.kind == 1068) eventRepo.getPollVoteCounts(event.id) else emptyMap()
+                                }
+                                val searchPollTotalVotes = remember(pollVoteVersion, event.id) {
+                                    if (event.kind == 1068) eventRepo.getPollTotalVotes(event.id) else 0
+                                }
+                                val searchUserPollVotes = remember(pollVoteVersion, event.id) {
+                                    if (event.kind == 1068) eventRepo.getUserPollVotes(event.id) else emptyList()
+                                }
                                 PostCard(
                                     event = event,
                                     profile = profile,
@@ -256,7 +267,11 @@ fun SearchScreen(
                                     isInList = event.id in listedIds,
                                     onDelete = { onDeleteEvent(event.id, event.kind) },
                                     translationState = translationState,
-                                    onTranslate = { translationRepo?.translate(event.id, event.content) }
+                                    onTranslate = { translationRepo?.translate(event.id, event.content) },
+                                    pollVoteCounts = searchPollVoteCounts,
+                                    pollTotalVotes = searchPollTotalVotes,
+                                    userPollVotes = searchUserPollVotes,
+                                    onPollVote = { optionIds -> onPollVote(event.id, optionIds) }
                                 )
                             }
                         }

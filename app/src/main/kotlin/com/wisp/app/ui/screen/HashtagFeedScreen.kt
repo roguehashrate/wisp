@@ -62,7 +62,8 @@ fun HashtagFeedScreen(
     onCreateDefaultSet: () -> Unit = {},
     nip05Repo: Nip05Repository? = null,
     translationRepo: TranslationRepository? = null,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     val hashtag by viewModel.hashtag.collectAsState()
     val notes by viewModel.notes.collectAsState()
@@ -73,6 +74,7 @@ fun HashtagFeedScreen(
     val replyCountVersion by eventRepo.replyCountVersion.collectAsState()
     val zapVersion by eventRepo.zapVersion.collectAsState()
     val repostVersion by eventRepo.repostVersion.collectAsState()
+    val pollVoteVersion by eventRepo.pollVoteVersion.collectAsState()
 
     val isFollowing = remember(interestSets, hashtag) {
         interestSets.any { hashtag.lowercase() in it.hashtags }
@@ -163,7 +165,9 @@ fun HashtagFeedScreen(
                         repostVersion = repostVersion,
                         noteActions = noteActions,
                         nip05Repo = nip05Repo,
-                        translationRepo = translationRepo
+                        translationRepo = translationRepo,
+                        pollVoteVersion = pollVoteVersion,
+                        onPollVote = onPollVote
                     )
                 }
             }
@@ -237,7 +241,9 @@ private fun HashtagFeedItem(
     repostVersion: Int,
     noteActions: NoteActions,
     nip05Repo: Nip05Repository? = null,
-    translationRepo: TranslationRepository? = null
+    translationRepo: TranslationRepository? = null,
+    pollVoteVersion: Int = 0,
+    onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     val profile = remember(profileVersion, event.pubkey) {
         eventRepo.getProfileData(event.pubkey)
@@ -279,6 +285,15 @@ private fun HashtagFeedItem(
     val translationState = remember(translationVersion, event.id) {
         translationRepo?.getState(event.id) ?: com.wisp.app.repo.TranslationState()
     }
+    val pollVoteCounts = remember(pollVoteVersion, event.id) {
+        if (event.kind == 1068) eventRepo.getPollVoteCounts(event.id) else emptyMap()
+    }
+    val pollTotalVotes = remember(pollVoteVersion, event.id) {
+        if (event.kind == 1068) eventRepo.getPollTotalVotes(event.id) else 0
+    }
+    val userPollVotes = remember(pollVoteVersion, event.id) {
+        if (event.kind == 1068) eventRepo.getUserPollVotes(event.id) else emptyList()
+    }
 
     PostCard(
         event = event,
@@ -315,6 +330,10 @@ private fun HashtagFeedItem(
         onQuotedNoteClick = noteActions.onNoteClick,
         noteActions = noteActions,
         translationState = translationState,
-        onTranslate = { translationRepo?.translate(event.id, event.content) }
+        onTranslate = { translationRepo?.translate(event.id, event.content) },
+        pollVoteCounts = pollVoteCounts,
+        pollTotalVotes = pollTotalVotes,
+        userPollVotes = userPollVotes,
+        onPollVote = { optionIds -> onPollVote(event.id, optionIds) }
     )
 }

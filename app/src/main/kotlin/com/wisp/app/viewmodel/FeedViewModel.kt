@@ -430,6 +430,7 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
     fun deleteEvent(eventId: String, kind: Int) = socialActions.deleteEvent(eventId, kind)
     fun followAll(pubkeys: Set<String>) = socialActions.followAll(pubkeys)
     fun muteThread(rootEventId: String) = socialActions.muteThread(rootEventId)
+    fun publishPollVote(pollEventId: String, optionIds: List<String>) = socialActions.publishPollVote(pollEventId, optionIds)
 
     // -- List CRUD delegates --
     fun createList(name: String, isPrivate: Boolean = false) = listCrud.createList(name, isPrivate)

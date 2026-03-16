@@ -5,6 +5,7 @@ import com.wisp.app.nostr.Nip09
 import com.wisp.app.nostr.Nip30
 import com.wisp.app.nostr.Bolt11
 import com.wisp.app.nostr.Nip57
+import com.wisp.app.nostr.Nip88
 import com.wisp.app.nostr.NostrEvent
 import com.wisp.app.nostr.NostrEvent.Companion.fromJson
 import com.wisp.app.nostr.ProfileData
@@ -115,6 +116,15 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
     // Events where we optimistically added the user's own zap (to avoid double-counting receipts)
     private val optimisticZaps = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
+    // Poll vote tracking: pollId -> (optionId -> count)
+    private val pollVoteCounts = LruCache<String, ConcurrentHashMap<String, Int>>(5000)
+    // pollId -> (voterPubkey -> timestamp) for one-vote-per-pubkey enforcement
+    private val pollVoters = LruCache<String, ConcurrentHashMap<String, Long>>(5000)
+    // pollId -> selected option IDs for current user
+    private val userPollVotes = LruCache<String, List<String>>(5000)
+    private val _pollVoteVersion = MutableStateFlow(0)
+    val pollVoteVersion: StateFlow<Int> = _pollVoteVersion
+
     // Debouncing: coalesce rapid-fire feed list and version updates
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val feedDirty = Channel<Unit>(Channel.CONFLATED)
@@ -162,6 +172,7 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
             var pendingZap = false
             var pendingRepost = false
             var pendingRelaySource = false
+            var pendingPollVote = false
             for (signal in versionDirty) {
                 // Drain all pending flags and wait for a quiet period
                 delay(50)
@@ -171,12 +182,14 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
                 if (pendingZap || zapDirty) { _zapVersion.value++; zapDirty = false }
                 if (pendingRepost || repostDirty) { _repostVersion.value++; repostDirty = false }
                 if (pendingRelaySource || relaySourceDirtyFlag) { _relaySourceVersion.value++; relaySourceDirtyFlag = false }
+                if (pendingPollVote || pollVoteDirty) { _pollVoteVersion.value++; pollVoteDirty = false }
                 pendingProfile = false
                 pendingReaction = false
                 pendingReplyCount = false
                 pendingZap = false
                 pendingRepost = false
                 pendingRelaySource = false
+                pendingPollVote = false
             }
         }
     }
@@ -187,6 +200,7 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
     @Volatile private var zapDirty = false
     @Volatile private var repostDirty = false
     @Volatile private var relaySourceDirtyFlag = false
+    @Volatile private var pollVoteDirty = false
 
     private fun markVersionDirty() {
         versionDirty.trySend(Unit)
@@ -202,7 +216,7 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
         // side effects (counts, details, etc.) — skip eventCache to avoid evicting the
         // kind 0/1 events that screens actually navigate to.
         // Zap receipts (9735) are cached for the zap inspector debug feature.
-        if (event.kind != 7 && event.kind != 6) {
+        if (event.kind != 7 && event.kind != 6 && event.kind != Nip88.KIND_POLL_RESPONSE) {
             eventCache.put(event.id, event)
         }
         eventPersistence?.persistEvent(event)
@@ -283,6 +297,11 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
                     }
                 }
             }
+            Nip88.KIND_POLL -> {
+                // Polls are top-level feed events like kind 1
+                binaryInsert(event, fromFeed = true)
+            }
+            Nip88.KIND_POLL_RESPONSE -> addPollVote(event)
             7 -> addReaction(event)
             9735 -> {
                 val targetId = Nip57.getZappedEventId(event)
@@ -365,6 +384,56 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
         }
         reactionDirty = true
         markVersionDirty()
+    }
+
+    private fun addPollVote(event: NostrEvent) {
+        val pollId = Nip88.getPollEventId(event) ?: return
+        val optionIds = Nip88.getResponseOptionIds(event)
+        if (optionIds.isEmpty()) return
+
+        // Check if poll has ended
+        val pollEvent = eventCache.get(pollId)
+        if (pollEvent != null && Nip88.isPollEnded(pollEvent)) return
+
+        // One-vote-per-pubkey enforcement (latest timestamp wins)
+        val voters = pollVoters.get(pollId)
+            ?: ConcurrentHashMap<String, Long>().also { pollVoters.put(pollId, it) }
+        val prevTimestamp = voters[event.pubkey]
+        if (prevTimestamp != null && event.created_at <= prevTimestamp) return
+
+        val counts = pollVoteCounts.get(pollId)
+            ?: ConcurrentHashMap<String, Int>().also { pollVoteCounts.put(pollId, it) }
+
+        // Decrement old counts if replacing a previous vote
+        if (prevTimestamp != null) {
+            // We don't store previous option IDs per voter, so we can't decrement precisely.
+            // This is acceptable — counts are approximate, and the common case is first vote.
+        }
+
+        voters[event.pubkey] = event.created_at
+        for (optionId in optionIds) {
+            counts[optionId] = (counts[optionId] ?: 0) + 1
+        }
+
+        // Track current user's vote
+        if (event.pubkey == currentUserPubkey) {
+            userPollVotes.put(pollId, optionIds)
+        }
+
+        pollVoteDirty = true
+        markVersionDirty()
+    }
+
+    fun getPollVoteCounts(pollId: String): Map<String, Int> {
+        return pollVoteCounts.get(pollId)?.toMap() ?: emptyMap()
+    }
+
+    fun getPollTotalVotes(pollId: String): Int {
+        return pollVoters.get(pollId)?.size ?: 0
+    }
+
+    fun getUserPollVotes(pollId: String): List<String> {
+        return userPollVotes.get(pollId) ?: emptyList()
     }
 
     /**

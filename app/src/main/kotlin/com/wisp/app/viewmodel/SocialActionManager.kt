@@ -13,6 +13,7 @@ import com.wisp.app.nostr.NostrSigner
 import com.wisp.app.nostr.Nip18
 import com.wisp.app.nostr.Nip09
 import com.wisp.app.nostr.Nip57
+import com.wisp.app.nostr.Nip88
 import com.wisp.app.relay.OutboxRouter
 import com.wisp.app.relay.RelayPool
 import com.wisp.app.repo.ContactRepository
@@ -312,6 +313,23 @@ class SocialActionManager(
                     if (isPrivate) relayPool.closeOnAllRelays("zap-rcpt-dm-${event.id.take(12)}")
                 }
             )
+        }
+    }
+
+    fun publishPollVote(pollEventId: String, optionIds: List<String>) {
+        val s = getSigner() ?: return
+        scope.launch {
+            try {
+                val tags = Nip88.buildResponseTags(pollEventId, optionIds).toMutableList()
+                if (interfacePrefs.isClientTagEnabled()) {
+                    tags.add(listOf("client", "Wisp"))
+                }
+                val event = s.signEvent(kind = Nip88.KIND_POLL_RESPONSE, content = "", tags = tags)
+                val msg = ClientMessage.event(event)
+                relayPool.sendToWriteRelays(msg)
+                // Optimistically add to eventRepo so UI updates immediately
+                eventRepo.addEvent(event)
+            } catch (_: Exception) {}
         }
     }
 }

@@ -115,7 +115,8 @@ fun NotificationsScreen(
     onOpenEmojiLibrary: (() -> Unit)? = null,
     zapError: SharedFlow<String>? = null,
     onRefresh: () -> Unit = {},
-    translationRepo: TranslationRepository? = null
+    translationRepo: TranslationRepository? = null,
+    onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     val notifications by viewModel.filteredNotifications.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -157,6 +158,7 @@ fun NotificationsScreen(
     val replyCountVersion = eventRepo?.replyCountVersion?.collectAsState()?.value ?: 0
     val repostVersion = eventRepo?.repostVersion?.collectAsState()?.value ?: 0
     val profileVersion = eventRepo?.profileVersion?.collectAsState()?.value ?: 0
+    val pollVoteVersion = eventRepo?.pollVoteVersion?.collectAsState()?.value ?: 0
     val followListSize = viewModel.contactRepository?.followList?.collectAsState()?.value?.size ?: 0
 
     Scaffold(
@@ -304,7 +306,9 @@ fun NotificationsScreen(
                             resolvedEmojis = resolvedEmojis,
                             unicodeEmojis = unicodeEmojis,
                             onOpenEmojiLibrary = onOpenEmojiLibrary,
-                            translationRepo = translationRepo
+                            translationRepo = translationRepo,
+                            pollVoteVersion = pollVoteVersion,
+                            onPollVote = onPollVote
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 0.5.dp)
                     }
@@ -343,7 +347,9 @@ fun NotificationsScreen(
                             resolvedEmojis = resolvedEmojis,
                             unicodeEmojis = unicodeEmojis,
                             onOpenEmojiLibrary = onOpenEmojiLibrary,
-                            translationRepo = translationRepo
+                            translationRepo = translationRepo,
+                            pollVoteVersion = pollVoteVersion,
+                            onPollVote = onPollVote
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 0.5.dp)
                     }
@@ -459,7 +465,9 @@ private fun NotificationItem(
     resolvedEmojis: Map<String, String> = emptyMap(),
     unicodeEmojis: List<String> = emptyList(),
     onOpenEmojiLibrary: (() -> Unit)? = null,
-    translationRepo: TranslationRepository? = null
+    translationRepo: TranslationRepository? = null,
+    pollVoteVersion: Int = 0,
+    onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     // Shared PostCard params for rendering referenced notes with full action bar
     val postCardParams = NotifPostCardParams(
@@ -490,7 +498,9 @@ private fun NotificationItem(
         isZapAnimating = isZapAnimating,
         isZapInProgress = isZapInProgress,
         isInList = isInList,
-        translationRepo = translationRepo
+        translationRepo = translationRepo,
+        pollVoteVersion = pollVoteVersion,
+        onPollVote = onPollVote
     )
 
     when (group) {
@@ -959,7 +969,9 @@ private data class NotifPostCardParams(
     val isZapAnimating: (String) -> Boolean,
     val isZapInProgress: (String) -> Boolean,
     val isInList: (String) -> Boolean,
-    val translationRepo: TranslationRepository? = null
+    val translationRepo: TranslationRepository? = null,
+    val pollVoteVersion: Int = 0,
+    val onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 )
 
 // ── Referenced Note PostCard ────────────────────────────────────────────
@@ -1033,6 +1045,15 @@ private fun ReferencedNotePostCard(
     val translationState = remember(translationVersion, event.id) {
         params.translationRepo?.getState(event.id) ?: com.wisp.app.repo.TranslationState()
     }
+    val pollVoteCounts = remember(params.pollVoteVersion, event.id) {
+        if (event.kind == 1068) eventRepo.getPollVoteCounts(event.id) else emptyMap()
+    }
+    val pollTotalVotes = remember(params.pollVoteVersion, event.id) {
+        if (event.kind == 1068) eventRepo.getPollTotalVotes(event.id) else 0
+    }
+    val userPollVotes = remember(params.pollVoteVersion, event.id) {
+        if (event.kind == 1068) eventRepo.getUserPollVotes(event.id) else emptyList()
+    }
 
     PostCard(
         event = event,
@@ -1077,6 +1098,10 @@ private fun ReferencedNotePostCard(
         onQuotedNoteClick = params.onNoteClick,
         translationState = translationState,
         onTranslate = { params.translationRepo?.translate(event.id, event.content) },
+        pollVoteCounts = pollVoteCounts,
+        pollTotalVotes = pollTotalVotes,
+        userPollVotes = userPollVotes,
+        onPollVote = { optionIds -> params.onPollVote(event.id, optionIds) },
         showDivider = false
     )
 

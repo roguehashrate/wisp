@@ -146,7 +146,7 @@ class UserProfileViewModel(app: Application) : AndroidViewModel(app) {
 
         // Request fresh profile, posts, follow list, and relay list
         val profileFilter = Filter(kinds = listOf(0), authors = listOf(pubkey), limit = 1)
-        val postsFilter = Filter(kinds = listOf(1, 6, 30023), authors = listOf(pubkey), limit = 50)
+        val postsFilter = Filter(kinds = listOf(1, 6, 1068, 30023), authors = listOf(pubkey), limit = 50)
         val followFilter = Filter(kinds = listOf(3), authors = listOf(pubkey), limit = 1)
         val relayFilter = Filter(kinds = listOf(10002), authors = listOf(pubkey), limit = 1)
         val pinFilter = Filter(kinds = listOf(10001), authors = listOf(pubkey), limit = 1)
@@ -402,7 +402,7 @@ class UserProfileViewModel(app: Application) : AndroidViewModel(app) {
         if (oldestNoteTimestamp == Long.MAX_VALUE) { isLoadingMoreNotes = false; return }
 
         val pool = relayPoolRef ?: run { isLoadingMoreNotes = false; return }
-        val filter = Filter(kinds = listOf(1, 6, 30023), authors = listOf(targetPubkey), until = oldestNoteTimestamp - 1, limit = 50)
+        val filter = Filter(kinds = listOf(1, 6, 1068, 30023), authors = listOf(targetPubkey), until = oldestNoteTimestamp - 1, limit = 50)
 
         val router = outboxRouterRef
         if (router != null) {

@@ -15,6 +15,7 @@ import com.wisp.app.nostr.Nip10
 import com.wisp.app.nostr.Nip18
 import com.wisp.app.nostr.Nip19
 import com.wisp.app.nostr.Nip37
+import com.wisp.app.nostr.Nip88
 import com.wisp.app.nostr.NostrEvent
 import com.wisp.app.nostr.NostrSigner
 import com.wisp.app.nostr.toHex
@@ -96,6 +97,44 @@ class ComposeViewModel(app: Application, private val savedStateHandle: SavedStat
         val newValue = !_powEnabled.value
         _powEnabled.value = newValue
         powPrefs.setNotePowEnabled(newValue)
+    }
+
+    private val _pollEnabled = MutableStateFlow(false)
+    val pollEnabled: StateFlow<Boolean> = _pollEnabled
+
+    private val _pollOptions = MutableStateFlow(listOf("", ""))
+    val pollOptions: StateFlow<List<String>> = _pollOptions
+
+    private val _pollType = MutableStateFlow(Nip88.PollType.SINGLECHOICE)
+    val pollType: StateFlow<Nip88.PollType> = _pollType
+
+    fun togglePoll() {
+        _pollEnabled.value = !_pollEnabled.value
+    }
+
+    fun updatePollOption(index: Int, text: String) {
+        val options = _pollOptions.value.toMutableList()
+        if (index in options.indices) {
+            options[index] = text
+            _pollOptions.value = options
+        }
+    }
+
+    fun addPollOption() {
+        if (_pollOptions.value.size < 10) {
+            _pollOptions.value = _pollOptions.value + ""
+        }
+    }
+
+    fun removePollOption(index: Int) {
+        if (_pollOptions.value.size > 2 && index in _pollOptions.value.indices) {
+            _pollOptions.value = _pollOptions.value.toMutableList().apply { removeAt(index) }
+        }
+    }
+
+    fun togglePollType() {
+        _pollType.value = if (_pollType.value == Nip88.PollType.SINGLECHOICE)
+            Nip88.PollType.MULTIPLECHOICE else Nip88.PollType.SINGLECHOICE
     }
 
     private var mentionStartIndex: Int = -1
@@ -381,6 +420,23 @@ class ComposeViewModel(app: Application, private val savedStateHandle: SavedStat
             tags.add(listOf("t", hashtag))
         }
 
+        // Build poll tags if poll is enabled
+        val eventKind: Int
+        if (_pollEnabled.value) {
+            val nonBlankOptions = _pollOptions.value
+                .mapIndexed { i, label -> Nip88.PollOption(i.toString(), label.trim()) }
+                .filter { it.label.isNotBlank() }
+            if (nonBlankOptions.size < 2) {
+                _error.value = "Poll needs at least 2 options"
+                _publishing.value = false
+                return 0
+            }
+            tags.addAll(Nip88.buildPollTags(nonBlankOptions, _pollType.value))
+            eventKind = Nip88.KIND_POLL
+        } else {
+            eventKind = 1
+        }
+
         if (interfacePrefs.isClientTagEnabled()) {
             tags.add(listOf("client", "Wisp"))
         }
@@ -392,7 +448,7 @@ class ComposeViewModel(app: Application, private val savedStateHandle: SavedStat
                 signer = signer,
                 content = finalContent,
                 tags = tags,
-                kind = 1,
+                kind = eventKind,
                 replyToPubkey = replyPubkey,
                 onPublished = {
                     if (replyTo != null) {
@@ -413,7 +469,7 @@ class ComposeViewModel(app: Application, private val savedStateHandle: SavedStat
             return -1
         }
 
-        val event = signer.signEvent(kind = 1, content = finalContent, tags = tags)
+        val event = signer.signEvent(kind = eventKind, content = finalContent, tags = tags)
         val msg = ClientMessage.event(event)
         var sentCount = if (replyTo != null && outboxRouter != null) {
             outboxRouter.publishToInbox(msg, replyTo.pubkey)
@@ -560,6 +616,9 @@ class ComposeViewModel(app: Application, private val savedStateHandle: SavedStat
         _explicit.value = false
         _hashtags.value = emptyList()
         _powEnabled.value = false
+        _pollEnabled.value = false
+        _pollOptions.value = listOf("", "")
+        _pollType.value = Nip88.PollType.SINGLECHOICE
         clearMentionState()
     }
 }

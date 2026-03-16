@@ -167,6 +167,7 @@ fun FeedScreen(
     val followList by viewModel.contactRepo.followList.collectAsState()
     val profileVersion by viewModel.eventRepo.profileVersion.collectAsState()
     val nip05Version by viewModel.nip05Repo.version.collectAsState()
+    val pollVoteVersion by viewModel.eventRepo.pollVoteVersion.collectAsState()
     val translationVersion by viewModel.translationRepo.version.collectAsState()
     val connectedCount by viewModel.relayPool.connectedCount.collectAsState()
     val listState = rememberLazyListState()
@@ -894,7 +895,9 @@ fun FeedScreen(
                                     },
                                     noteActions = noteActions,
                                     onOpenEmojiLibrary = { showEmojiLibrary = true },
-                                    translationVersion = translationVersion
+                                    translationVersion = translationVersion,
+                                    pollVoteVersion = pollVoteVersion,
+                                    onPollVote = { optionIds -> viewModel.publishPollVote(event.id, optionIds) }
                                 )
                                 }
                             }
@@ -984,7 +987,9 @@ private fun FeedItem(
     onRelayClick: (String) -> Unit = {},
     noteActions: NoteActions? = null,
     onOpenEmojiLibrary: (() -> Unit)? = null,
-    translationVersion: Int = 0
+    translationVersion: Int = 0,
+    pollVoteVersion: Int = 0,
+    onPollVote: (List<String>) -> Unit = {}
 ) {
     val profileData = remember(profileVersion, event.pubkey) {
         viewModel.eventRepo.getProfileData(event.pubkey)
@@ -1038,6 +1043,15 @@ private fun FeedItem(
     val translationState = remember(translationVersion, event.id) {
         viewModel.translationRepo.getState(event.id)
     }
+    val pollVoteCounts = remember(pollVoteVersion, event.id) {
+        if (event.kind == 1068) viewModel.eventRepo.getPollVoteCounts(event.id) else emptyMap()
+    }
+    val pollTotalVotes = remember(pollVoteVersion, event.id) {
+        if (event.kind == 1068) viewModel.eventRepo.getPollTotalVotes(event.id) else 0
+    }
+    val userPollVotes = remember(pollVoteVersion, event.id) {
+        if (event.kind == 1068) viewModel.eventRepo.getUserPollVotes(event.id) else emptyList()
+    }
     PostCard(
         event = event,
         profile = profileData,
@@ -1083,6 +1097,10 @@ private fun FeedItem(
         resolvedEmojis = resolvedEmojis,
         unicodeEmojis = unicodeEmojis,
         onOpenEmojiLibrary = onOpenEmojiLibrary,
+        pollVoteCounts = pollVoteCounts,
+        pollTotalVotes = pollTotalVotes,
+        userPollVotes = userPollVotes,
+        onPollVote = onPollVote,
         translationState = translationState,
         onTranslate = { viewModel.translateEvent(event.id, event.content) }
     )

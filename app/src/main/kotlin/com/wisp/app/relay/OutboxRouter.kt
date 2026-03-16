@@ -426,7 +426,7 @@ class OutboxRouter(
         for ((relayUrl, eventIds) in relayToEventIds) {
             val uniqueIds = eventIds.distinct()
             val filters = uniqueIds.chunked(MAX_ETAGS_PER_FILTER).map { chunk ->
-                Filter(kinds = listOf(1, 5, 6, 7, 9735), eTags = chunk, limit = 500)
+                Filter(kinds = listOf(1, 5, 6, 7, 1018, 9735), eTags = chunk, limit = 500)
             }
             val msg = if (filters.size == 1) ClientMessage.req(prefix, filters[0])
             else ClientMessage.req(prefix, filters)
@@ -439,7 +439,7 @@ class OutboxRouter(
         if (fallbackEventIds.isNotEmpty()) {
             val uniqueIds = fallbackEventIds.distinct()
             val filters = uniqueIds.chunked(MAX_ETAGS_PER_FILTER).map { chunk ->
-                Filter(kinds = listOf(1, 5, 6, 7, 9735), eTags = chunk, limit = 500)
+                Filter(kinds = listOf(1, 5, 6, 7, 1018, 9735), eTags = chunk, limit = 500)
             }
             val msg = if (filters.size == 1) ClientMessage.req(prefix, filters[0])
             else ClientMessage.req(prefix, filters)
@@ -452,7 +452,7 @@ class OutboxRouter(
             val allEventIds = eventsByAuthor.values.flatten().distinct()
             if (allEventIds.isNotEmpty()) {
                 val filters = allEventIds.chunked(MAX_ETAGS_PER_FILTER).map { chunk ->
-                    Filter(kinds = listOf(1, 5, 6, 7, 9735), eTags = chunk, limit = 500)
+                    Filter(kinds = listOf(1, 5, 6, 7, 1018, 9735), eTags = chunk, limit = 500)
                 }
                 val msg = if (filters.size == 1) ClientMessage.req(prefix, filters[0])
                 else ClientMessage.req(prefix, filters)

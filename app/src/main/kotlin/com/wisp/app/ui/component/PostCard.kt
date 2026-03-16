@@ -66,6 +66,7 @@ import androidx.compose.material.icons.outlined.CurrencyBitcoin
 import com.wisp.app.nostr.Nip30
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.CircularProgressIndicator
+import com.wisp.app.nostr.Nip88
 import com.wisp.app.repo.EventRepository
 import com.wisp.app.repo.Nip05Repository
 import com.wisp.app.repo.ZapDetail
@@ -123,6 +124,10 @@ fun PostCard(
     unicodeEmojis: List<String> = emptyList(),
     onOpenEmojiLibrary: (() -> Unit)? = null,
     onMuteThread: (() -> Unit)? = null,
+    pollVoteCounts: Map<String, Int> = emptyMap(),
+    pollTotalVotes: Int = 0,
+    userPollVotes: List<String> = emptyList(),
+    onPollVote: (List<String>) -> Unit = {},
     translationState: TranslationState = TranslationState(),
     onTranslate: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -612,6 +617,17 @@ fun PostCard(
                 else -> {}
             }
 
+            // Poll section
+            if (event.kind == Nip88.KIND_POLL) {
+                PollSection(
+                    event = event,
+                    voteCounts = pollVoteCounts,
+                    totalVotes = pollTotalVotes,
+                    userVotes = userPollVotes,
+                    onVote = onPollVote
+                )
+            }
+
             // Top zapper banner
             if (zapDetails.isNotEmpty()) {
                 val topZap = remember(zapDetails) {
@@ -700,6 +716,172 @@ fun PostCard(
         }
         if (showDivider) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 0.5.dp)
+        }
+    }
+}
+
+@Composable
+private fun PollSection(
+    event: NostrEvent,
+    voteCounts: Map<String, Int>,
+    totalVotes: Int,
+    userVotes: List<String>,
+    onVote: (List<String>) -> Unit
+) {
+    val options = remember(event.id) { Nip88.parsePollOptions(event) }
+    val pollType = remember(event.id) { Nip88.parsePollType(event) }
+    val isEnded = remember(event.id) { Nip88.isPollEnded(event) }
+    val hasVoted = userVotes.isNotEmpty()
+    val showResults = hasVoted || isEnded
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+    ) {
+        if (showResults) {
+            // Results mode
+            options.forEach { option ->
+                val count = voteCounts[option.id] ?: 0
+                val percentage = if (totalVotes > 0) count.toFloat() / totalVotes else 0f
+                val isUserChoice = option.id in userVotes
+                PollResultRow(
+                    label = option.label,
+                    percentage = percentage,
+                    count = count,
+                    isUserChoice = isUserChoice
+                )
+            }
+            Text(
+                text = "$totalVotes vote${if (totalVotes != 1) "s" else ""}${if (isEnded) " · Poll ended" else ""}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        } else {
+            // Voting mode
+            if (pollType == Nip88.PollType.SINGLECHOICE) {
+                options.forEach { option ->
+                    PollOptionRow(
+                        label = option.label,
+                        selected = false,
+                        isRadio = true,
+                        onClick = { onVote(listOf(option.id)) }
+                    )
+                }
+            } else {
+                // Multiplechoice — track local selection and submit
+                var selected by remember { mutableStateOf(setOf<String>()) }
+                options.forEach { option ->
+                    PollOptionRow(
+                        label = option.label,
+                        selected = option.id in selected,
+                        isRadio = false,
+                        onClick = {
+                            selected = if (option.id in selected) selected - option.id
+                            else selected + option.id
+                        }
+                    )
+                }
+                if (selected.isNotEmpty()) {
+                    TextButton(
+                        onClick = { onVote(selected.toList()) }
+                    ) {
+                        Text("Vote")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PollOptionRow(
+    label: String,
+    selected: Boolean,
+    isRadio: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer
+               else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+        ) {
+            Text(
+                text = if (isRadio) {
+                    if (selected) "◉" else "○"
+                } else {
+                    if (selected) "☑" else "☐"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (selected) MaterialTheme.colorScheme.primary
+                       else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun PollResultRow(
+    label: String,
+    percentage: Float,
+    count: Int,
+    isUserChoice: Boolean
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+    ) {
+        // Background bar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction = percentage)
+                .matchParentSize()
+                .background(
+                    color = if (isUserChoice) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                           else MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp)
+                )
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+        ) {
+            if (isUserChoice) {
+                Text(
+                    text = "✓ ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "${(percentage * 100).toInt()}% ($count)",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
