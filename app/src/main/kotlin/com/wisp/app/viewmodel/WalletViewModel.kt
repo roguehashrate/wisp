@@ -785,12 +785,12 @@ class WalletViewModel(
 
     fun addAddressToNostrBio() {
         val address = _registeredAddress.value ?: return
+        val signer = buildSigner() ?: return
+        val pubkeyHex = keyRepo.getPubkeyHex() ?: return
         _showBioPrompt.value = false
 
         viewModelScope.launch {
             try {
-                val keypair = keyRepo.getKeypair() ?: return@launch
-                val pubkeyHex = keypair.pubkey.toHex()
                 val profile = eventRepo.getProfileData(pubkeyHex)
 
                 // Build kind 0 JSON preserving all existing fields
@@ -808,10 +808,11 @@ class WalletViewModel(
                     put("lud16", JsonPrimitive(address))
                 }.toString()
 
-                val signer = LocalSigner(keypair.privkey, keypair.pubkey)
                 val event = signer.signEvent(kind = 0, content = content)
                 val msg = ClientMessage.event(event)
                 relayPool.sendToWriteRelays(msg)
+                // Update local profile cache so the UI reflects the change immediately
+                eventRepo.cacheEvent(event)
             } catch (_: Exception) {
                 // Silently fail — profile update is best-effort
             }
@@ -1402,6 +1403,8 @@ class WalletViewModel(
         if (status !is RestoreFromRelayStatus.Found) return
         Log.d("WalletVM", "restoreFromRelayBackup: restoring wallet ${status.walletId}, ${status.mnemonic.split(" ").size} words")
         restoreSparkWallet(status.mnemonic)
+        _restoreFromRelayStatus.value = RestoreFromRelayStatus.Idle
+        navigateHome()
     }
 
     fun selectBackupToRestore(entry: BackupEntry) {
