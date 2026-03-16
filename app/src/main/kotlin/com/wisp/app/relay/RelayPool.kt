@@ -507,6 +507,15 @@ class RelayPool {
         return sentCount
     }
 
+    /** Send an EVENT message to all relays (read + write) so every relay gets it. */
+    fun sendToAllRelays(message: String): Int {
+        var sentCount = 0
+        for (relay in relays) {
+            if (relay.send(message)) sentCount++
+        }
+        return sentCount
+    }
+
     /**
      * Triggers connect() on any disconnected write relays and waits briefly
      * for at least one to become connected. Returns the number of connected
@@ -537,6 +546,31 @@ class RelayPool {
         }
         val final = writeRelays.count { it.isConnected }
         Log.d("RLC", "[Pool] ensureWriteRelaysConnected — timed out, $final write relay(s) connected")
+        return final
+    }
+
+    /** Ensure all persistent relays are connected, reconnecting any that are down. */
+    suspend fun ensureAllRelaysConnected(timeoutMs: Long = 5000): Int {
+        val disconnected = relays.filter { !it.isConnected }
+        if (disconnected.isEmpty()) return relays.size
+
+        Log.d("RLC", "[Pool] ensureAllRelaysConnected — ${relays.size - disconnected.size}/${relays.size} connected, reconnecting ${disconnected.size}")
+        for (relay in disconnected) {
+            relay.resetBackoff()
+            relay.connect()
+        }
+
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            val connected = relays.count { it.isConnected }
+            if (connected >= relays.size) {
+                Log.d("RLC", "[Pool] ensureAllRelaysConnected — all $connected relay(s) connected")
+                return connected
+            }
+            delay(200)
+        }
+        val final = relays.count { it.isConnected }
+        Log.d("RLC", "[Pool] ensureAllRelaysConnected — timed out, $final/${relays.size} connected")
         return final
     }
 
