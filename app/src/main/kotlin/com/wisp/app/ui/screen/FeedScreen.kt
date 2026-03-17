@@ -160,6 +160,7 @@ fun FeedScreen(
     onAddToList: (String) -> Unit = {},
     onRelayDetail: (String) -> Unit = {},
     onHashtagClick: ((String) -> Unit)? = null,
+    onViewSetFeed: ((com.wisp.app.nostr.InterestSet) -> Unit)? = null,
     onArticleClick: ((Int, String, String) -> Unit)? = null,
     scrollToTopTrigger: Int = 0
 ) {
@@ -359,6 +360,10 @@ fun FeedScreen(
             onSelectHashtag = { tag ->
                 showHashtagPicker = false
                 onHashtagClick?.invoke(tag)
+            },
+            onViewSetFeed = { set ->
+                showHashtagPicker = false
+                onViewSetFeed?.invoke(set)
             },
             onAddHashtag = { tag, dTag -> viewModel.followHashtag(tag, dTag) },
             onCreateSet = { name -> viewModel.createInterestSet(name) },
@@ -1700,6 +1705,7 @@ private fun HashtagPickerDialog(
     sets: List<com.wisp.app.nostr.InterestSet>,
     isLoading: Boolean = false,
     onSelectHashtag: (String) -> Unit,
+    onViewSetFeed: (com.wisp.app.nostr.InterestSet) -> Unit,
     onAddHashtag: (tag: String, dTag: String) -> Unit,
     onCreateSet: (String) -> Unit,
     onRenameSet: (String, String) -> Unit,
@@ -1720,12 +1726,22 @@ private fun HashtagPickerDialog(
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Hashtags")
                 TextButton(onClick = { showNewSetField = true }) {
                     Text("New Set")
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Close",
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         },
@@ -1801,6 +1817,15 @@ private fun HashtagPickerDialog(
                                             }
                                         )
                                 )
+                                if (set.hashtags.isNotEmpty()) {
+                                    TextButton(
+                                        onClick = { onViewSetFeed(set) },
+                                        modifier = Modifier.heightIn(min = 32.dp),
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                                    ) {
+                                        Text("Feed", style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
                                 IconButton(
                                     onClick = {
                                         addingToDTag = if (addingToDTag == set.dTag) null else set.dTag
@@ -1910,9 +1935,7 @@ private fun HashtagPickerDialog(
             }
         },
         confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
+        dismissButton = {}
     )
 
     // Delete confirmation

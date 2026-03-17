@@ -27,6 +27,9 @@ class HashtagFeedViewModel(app: Application) : AndroidViewModel(app) {
     private val _hashtag = MutableStateFlow("")
     val hashtag: StateFlow<String> = _hashtag
 
+    private val _setName = MutableStateFlow<String?>(null)
+    val setName: StateFlow<String?> = _setName
+
     private var relayPoolRef: RelayPool? = null
     private var eventRepoRef: EventRepository? = null
     private var loadJob: Job? = null
@@ -42,10 +45,34 @@ class HashtagFeedViewModel(app: Application) : AndroidViewModel(app) {
         eventRepo: EventRepository,
         topRelayUrls: List<String> = emptyList()
     ) {
+        _setName.value = null
+        loadTags(listOf(tag), tag, relayPool, eventRepo, topRelayUrls)
+    }
+
+    fun loadHashtags(
+        tags: List<String>,
+        name: String,
+        relayPool: RelayPool,
+        eventRepo: EventRepository,
+        topRelayUrls: List<String> = emptyList()
+    ) {
+        _setName.value = name
+        loadTags(tags, tags.firstOrNull() ?: "", relayPool, eventRepo, topRelayUrls)
+    }
+
+    private fun loadTags(
+        tags: List<String>,
+        displayTag: String,
+        relayPool: RelayPool,
+        eventRepo: EventRepository,
+        topRelayUrls: List<String> = emptyList()
+    ) {
+        if (tags.isEmpty()) return
+
         loadJob?.cancel()
         relayPoolRef?.let { closeAllSubs(it) }
 
-        _hashtag.value = tag
+        _hashtag.value = displayTag
         _notes.value = emptyList()
         _isLoading.value = true
         relayPoolRef = relayPool
@@ -87,8 +114,8 @@ class HashtagFeedViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
 
-            // Send REQs after collectors are active
-            val noteFilter = Filter(kinds = listOf(1), tTags = listOf(tag), limit = 100)
+            // Send REQs after collectors are active — use #t filter, not search query
+            val noteFilter = Filter(kinds = listOf(1), tTags = tags, limit = 100)
             val noteReq = ClientMessage.req(currentNoteSub, noteFilter)
             activeSubIds.add(currentNoteSub)
 

@@ -66,6 +66,7 @@ fun HashtagFeedScreen(
     onPollVote: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     val hashtag by viewModel.hashtag.collectAsState()
+    val setName by viewModel.setName.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -86,7 +87,7 @@ fun HashtagFeedScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "#$hashtag",
+                        text = setName ?: "#$hashtag",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
