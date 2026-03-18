@@ -4,8 +4,10 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.wisp.app.nostr.FlatNotificationItem
 import com.wisp.app.nostr.NotificationGroup
 import com.wisp.app.nostr.NotificationSummary
+import com.wisp.app.nostr.NotificationType
 import com.wisp.app.nostr.ProfileData
 import com.wisp.app.repo.ContactRepository
 import com.wisp.app.repo.EventRepository
@@ -24,7 +26,8 @@ enum class NotificationFilter(val label: String) {
     REACTIONS("Reactions"),
     ZAPS("Zaps"),
     REPOSTS("Reposts"),
-    MENTIONS("Mentions")
+    MENTIONS("Mentions"),
+    VOTES("Votes")
 }
 
 class NotificationsViewModel(app: Application) : AndroidViewModel(app) {
@@ -50,6 +53,9 @@ class NotificationsViewModel(app: Application) : AndroidViewModel(app) {
     val notifReceived: SharedFlow<Unit>
         get() = notifRepo?.notifReceived ?: MutableSharedFlow()
 
+    val flatNotifications: StateFlow<List<FlatNotificationItem>>
+        get() = notifRepo?.flatNotifications ?: MutableStateFlow(emptyList())
+
     val eventRepository: EventRepository?
         get() = eventRepo
 
@@ -67,6 +73,9 @@ class NotificationsViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _filteredNotifications = MutableStateFlow<List<NotificationGroup>>(emptyList())
     val filteredNotifications: StateFlow<List<NotificationGroup>> = _filteredNotifications
+
+    private val _filteredFlatNotifications = MutableStateFlow<List<FlatNotificationItem>>(emptyList())
+    val filteredFlatNotifications: StateFlow<List<FlatNotificationItem>> = _filteredFlatNotifications
 
     private var notifRepo: NotificationRepository? = null
     private var eventRepo: EventRepository? = null
@@ -107,8 +116,22 @@ class NotificationsViewModel(app: Application) : AndroidViewModel(app) {
                     NotificationFilter.MENTIONS -> notifs.filter {
                         it is NotificationGroup.MentionNotification || it is NotificationGroup.QuoteNotification
                     }
+                    NotificationFilter.VOTES -> emptyList() // votes only exist in flat list
                 }
             }.collect { _filteredNotifications.value = it }
+        }
+        viewModelScope.launch {
+            combine(flatNotifications, _filter) { items, filterType ->
+                when (filterType) {
+                    NotificationFilter.ALL -> items
+                    NotificationFilter.REPLIES -> items.filter { it.type == NotificationType.REPLY }
+                    NotificationFilter.REACTIONS -> items.filter { it.type == NotificationType.REACTION }
+                    NotificationFilter.ZAPS -> items.filter { it.type == NotificationType.ZAP }
+                    NotificationFilter.REPOSTS -> items.filter { it.type == NotificationType.REPOST }
+                    NotificationFilter.MENTIONS -> items.filter { it.type == NotificationType.MENTION || it.type == NotificationType.QUOTE }
+                    NotificationFilter.VOTES -> items.filter { it.type == NotificationType.VOTE }
+                }
+            }.collect { _filteredFlatNotifications.value = it }
         }
     }
 
