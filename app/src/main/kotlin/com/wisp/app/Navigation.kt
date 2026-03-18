@@ -1997,6 +1997,8 @@ fun WispNavHost(
                 feedViewModel.refreshDmsAndNotifications()
                 notificationsViewModel.markRead()
             }
+
+            val notifReplyScope = rememberCoroutineScope()
             var notifZapTarget by remember { mutableStateOf<NostrEvent?>(null) }
             val notifZapInProgress by feedViewModel.zapInProgress.collectAsState()
             var notifZapAnimatingIds by remember { mutableStateOf(emptySet<String>()) }
@@ -2057,6 +2059,45 @@ fun WispNavHost(
                 onProfileClick = { pubkey ->
                     navController.navigate("profile/$pubkey")
                 },
+                onRefresh = { feedViewModel.refreshDmsAndNotifications() },
+                onSendReply = { replyToEvent, content ->
+                    val signer = activeSigner ?: return@NotificationsScreen
+                    notifReplyScope.launch {
+                        val hint = feedViewModel.outboxRouter?.getRelayHint(replyToEvent.pubkey) ?: ""
+                        val tags = com.wisp.app.nostr.Nip10.buildReplyTags(replyToEvent, hint)
+
+                        if (feedViewModel.powPrefs.isNotePowEnabled()) {
+                            feedViewModel.powManager.submitNote(
+                                signer = signer,
+                                content = content,
+                                tags = tags,
+                                kind = 1,
+                                replyToPubkey = replyToEvent.pubkey,
+                                onPublished = {
+                                    feedViewModel.eventRepo.addReplyCount(replyToEvent.id, "pow-pending")
+                                    val rootId = com.wisp.app.nostr.Nip10.getRootId(replyToEvent)
+                                    if (rootId != null && rootId != replyToEvent.id) {
+                                        feedViewModel.eventRepo.addReplyCount(rootId, "pow-pending")
+                                    }
+                                }
+                            )
+                        } else {
+                            val event = signer.signEvent(kind = 1, content = content, tags = tags)
+                            val msg = com.wisp.app.nostr.ClientMessage.event(event)
+                            if (feedViewModel.outboxRouter != null) {
+                                feedViewModel.outboxRouter!!.publishToInbox(msg, replyToEvent.pubkey)
+                            } else {
+                                feedViewModel.relayPool.sendToWriteRelays(msg)
+                            }
+                            feedViewModel.eventRepo.cacheEvent(event)
+                            feedViewModel.eventRepo.addReplyCount(replyToEvent.id, event.id)
+                            val rootId = com.wisp.app.nostr.Nip10.getRootId(replyToEvent)
+                            if (rootId != null && rootId != replyToEvent.id) {
+                                feedViewModel.eventRepo.addReplyCount(rootId, event.id)
+                            }
+                        }
+                    }
+                },
                 onReply = { event ->
                     replyTarget = event
                     quoteTarget = null
@@ -2088,9 +2129,22 @@ fun WispNavHost(
                 unicodeEmojis = notifUnicodeEmojis,
                 onOpenEmojiLibrary = { showNotifEmojiLibrary = true },
                 zapError = feedViewModel.zapError,
-                onRefresh = { feedViewModel.refreshDmsAndNotifications() },
                 translationRepo = feedViewModel.translationRepo,
-                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) },
+                onUploadMedia = { uris, onUrl ->
+                    notifReplyScope.launch {
+                        for (uri in uris) {
+                            try {
+                                val inputStream = context.contentResolver.openInputStream(uri)
+                                val bytes = inputStream?.use { it.readBytes() } ?: continue
+                                val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+                                val ext = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "bin"
+                                val url = feedViewModel.blossomRepo.uploadMedia(bytes, mimeType, ext, activeSigner)
+                                onUrl(url)
+                            } catch (_: Exception) {}
+                        }
+                    }
+                }
             )
 
             if (showNotifEmojiLibrary) {

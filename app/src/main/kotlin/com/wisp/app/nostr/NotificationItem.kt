@@ -1,5 +1,23 @@
 package com.wisp.app.nostr
 
+enum class NotificationType { REACTION, ZAP, REPOST, REPLY, QUOTE, MENTION, VOTE }
+
+data class FlatNotificationItem(
+    val id: String,
+    val type: NotificationType,
+    val actorPubkey: String,
+    val referencedEventId: String,
+    val timestamp: Long,
+    val emoji: String? = null,
+    val emojiUrl: String? = null,
+    val zapSats: Long = 0,
+    val zapMessage: String = "",
+    val isPrivateZap: Boolean = false,
+    val replyEventId: String? = null,
+    val quoteEventId: String? = null,
+    val voteOptionIds: List<String> = emptyList(),
+)
+
 data class NotificationSummary(
     val replyCount: Int = 0,
     val reactionCount: Int = 0,
