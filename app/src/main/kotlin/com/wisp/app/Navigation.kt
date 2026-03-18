@@ -194,7 +194,8 @@ fun WispNavHost(
     // Reactive: recomposes on login, logout, and account switch
     val context = LocalContext.current
     val signingMode by authViewModel.signingModeFlow.collectAsState()
-    val activeSigner = remember(signingMode) {
+    val npub by authViewModel.npub.collectAsState()
+    val activeSigner = remember(signingMode, npub) {
         when (signingMode) {
             SigningMode.REMOTE -> {
                 val pubkey = authViewModel.keyRepo.getPubkeyHex() ?: ""
@@ -244,6 +245,7 @@ fun WispNavHost(
     val accounts by authViewModel.accountsFlow.collectAsState()
 
     val onSwitchAccount: (String) -> Unit = { pubkeyHex ->
+        feedViewModel.clearSigner()
         feedViewModel.resetForAccountSwitch()
         walletViewModel.suspendForAccountSwitch()  // disconnect only, preserve credentials
         authViewModel.switchAccount(pubkeyHex)
@@ -731,6 +733,7 @@ fun WispNavHost(
                 onSwitchAccount = onSwitchAccount,
                 onAddAccount = onAddAccount,
                 onLogout = {
+                    feedViewModel.clearSigner()
                     feedViewModel.resetForAccountSwitch()
                     walletViewModel.disconnectWallet()  // full clear — intentional logout
                     val hasRemaining = authViewModel.logOut()
