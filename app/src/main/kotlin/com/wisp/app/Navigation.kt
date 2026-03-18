@@ -1911,7 +1911,7 @@ fun WispNavHost(
             val scope = rememberCoroutineScope()
             BackHandler(onBack = onBack)
             LaunchedEffect(Unit) {
-                onboardingViewModel.startDiscovery(feedViewModel.sparkRepo)
+                onboardingViewModel.startDiscovery(feedViewModel.sparkRepo, feedViewModel.walletModeRepo)
             }
             OnboardingScreen(
                 viewModel = onboardingViewModel,
