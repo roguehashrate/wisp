@@ -137,6 +137,10 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
         registerAuthSigner()
     }
 
+    fun clearSigner() {
+        signer = null
+    }
+
     private fun registerAuthSigner() {
         val s = signer ?: return
         relayPool.setAuthSigner { relayUrl, challenge ->

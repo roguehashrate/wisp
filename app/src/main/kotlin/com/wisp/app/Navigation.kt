@@ -194,7 +194,8 @@ fun WispNavHost(
     // Reactive: recomposes on login, logout, and account switch
     val context = LocalContext.current
     val signingMode by authViewModel.signingModeFlow.collectAsState()
-    val activeSigner = remember(signingMode) {
+    val npub by authViewModel.npub.collectAsState()
+    val activeSigner = remember(signingMode, npub) {
         when (signingMode) {
             SigningMode.REMOTE -> {
                 val pubkey = authViewModel.keyRepo.getPubkeyHex() ?: ""
@@ -244,6 +245,7 @@ fun WispNavHost(
     val accounts by authViewModel.accountsFlow.collectAsState()
 
     val onSwitchAccount: (String) -> Unit = { pubkeyHex ->
+        feedViewModel.clearSigner()
         feedViewModel.resetForAccountSwitch()
         walletViewModel.suspendForAccountSwitch()  // disconnect only, preserve credentials
         authViewModel.switchAccount(pubkeyHex)
@@ -361,7 +363,11 @@ fun WispNavHost(
 
     // Initialize notifications viewmodel with shared repos
     LaunchedEffect(Unit) {
-        notificationsViewModel.init(feedViewModel.notifRepo, feedViewModel.eventRepo, feedViewModel.contactRepo)
+        notificationsViewModel.init(
+            feedViewModel.notifRepo, feedViewModel.eventRepo, feedViewModel.contactRepo,
+            feedViewModel.dmRepo, feedViewModel.relayPool, feedViewModel.relayListRepo,
+            feedViewModel.powPrefs
+        )
     }
 
     // Resolve deep link URI to a navigation route
@@ -465,6 +471,21 @@ fun WispNavHost(
     LaunchedEffect(Unit) {
         notificationsViewModel.replyReceived.collect {
             if (currentNotifSoundEnabled) HapticHelper.pulse()
+        }
+    }
+    LaunchedEffect(Unit) {
+        notificationsViewModel.dmReceived.collect {
+            isReplyAnimating = true
+            kotlinx.coroutines.delay(1000)
+            isReplyAnimating = false
+            if (currentNotifSoundEnabled) HapticHelper.pulse()
+        }
+    }
+    // Background decryption of pending DM gift wraps (remote signer mode)
+    val pendingDmCount by dmListViewModel.pendingDecryptCount.collectAsState()
+    LaunchedEffect(pendingDmCount, activeSigner) {
+        if (pendingDmCount > 0) {
+            activeSigner?.let { dmListViewModel.decryptPending(it) }
         }
     }
     LaunchedEffect(Unit) {
@@ -731,6 +752,7 @@ fun WispNavHost(
                 onSwitchAccount = onSwitchAccount,
                 onAddAccount = onAddAccount,
                 onLogout = {
+                    feedViewModel.clearSigner()
                     feedViewModel.resetForAccountSwitch()
                     walletViewModel.disconnectWallet()  // full clear — intentional logout
                     val hasRemaining = authViewModel.logOut()
@@ -1908,7 +1930,7 @@ fun WispNavHost(
             val scope = rememberCoroutineScope()
             BackHandler(onBack = onBack)
             LaunchedEffect(Unit) {
-                onboardingViewModel.startDiscovery(feedViewModel.sparkRepo)
+                onboardingViewModel.startDiscovery(feedViewModel.sparkRepo, feedViewModel.walletModeRepo)
             }
             OnboardingScreen(
                 viewModel = onboardingViewModel,
@@ -1994,6 +2016,8 @@ fun WispNavHost(
                 feedViewModel.refreshDmsAndNotifications()
                 notificationsViewModel.markRead()
             }
+
+            val notifReplyScope = rememberCoroutineScope()
             var notifZapTarget by remember { mutableStateOf<NostrEvent?>(null) }
             val notifZapInProgress by feedViewModel.zapInProgress.collectAsState()
             var notifZapAnimatingIds by remember { mutableStateOf(emptySet<String>()) }
@@ -2054,6 +2078,45 @@ fun WispNavHost(
                 onProfileClick = { pubkey ->
                     navController.navigate("profile/$pubkey")
                 },
+                onRefresh = { feedViewModel.refreshDmsAndNotifications() },
+                onSendReply = { replyToEvent, content ->
+                    val signer = activeSigner ?: return@NotificationsScreen
+                    notifReplyScope.launch {
+                        val hint = feedViewModel.outboxRouter?.getRelayHint(replyToEvent.pubkey) ?: ""
+                        val tags = com.wisp.app.nostr.Nip10.buildReplyTags(replyToEvent, hint)
+
+                        if (feedViewModel.powPrefs.isNotePowEnabled()) {
+                            feedViewModel.powManager.submitNote(
+                                signer = signer,
+                                content = content,
+                                tags = tags,
+                                kind = 1,
+                                replyToPubkey = replyToEvent.pubkey,
+                                onPublished = {
+                                    feedViewModel.eventRepo.addReplyCount(replyToEvent.id, "pow-pending")
+                                    val rootId = com.wisp.app.nostr.Nip10.getRootId(replyToEvent)
+                                    if (rootId != null && rootId != replyToEvent.id) {
+                                        feedViewModel.eventRepo.addReplyCount(rootId, "pow-pending")
+                                    }
+                                }
+                            )
+                        } else {
+                            val event = signer.signEvent(kind = 1, content = content, tags = tags)
+                            val msg = com.wisp.app.nostr.ClientMessage.event(event)
+                            if (feedViewModel.outboxRouter != null) {
+                                feedViewModel.outboxRouter!!.publishToInbox(msg, replyToEvent.pubkey)
+                            } else {
+                                feedViewModel.relayPool.sendToWriteRelays(msg)
+                            }
+                            feedViewModel.eventRepo.cacheEvent(event)
+                            feedViewModel.eventRepo.addReplyCount(replyToEvent.id, event.id)
+                            val rootId = com.wisp.app.nostr.Nip10.getRootId(replyToEvent)
+                            if (rootId != null && rootId != replyToEvent.id) {
+                                feedViewModel.eventRepo.addReplyCount(rootId, event.id)
+                            }
+                        }
+                    }
+                },
                 onReply = { event ->
                     replyTarget = event
                     quoteTarget = null
@@ -2085,9 +2148,25 @@ fun WispNavHost(
                 unicodeEmojis = notifUnicodeEmojis,
                 onOpenEmojiLibrary = { showNotifEmojiLibrary = true },
                 zapError = feedViewModel.zapError,
-                onRefresh = { feedViewModel.refreshDmsAndNotifications() },
                 translationRepo = feedViewModel.translationRepo,
-                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) },
+                onUploadMedia = { uris, onUrl ->
+                    notifReplyScope.launch {
+                        for (uri in uris) {
+                            try {
+                                val inputStream = context.contentResolver.openInputStream(uri)
+                                val bytes = inputStream?.use { it.readBytes() } ?: continue
+                                val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+                                val ext = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "bin"
+                                val url = feedViewModel.blossomRepo.uploadMedia(bytes, mimeType, ext, activeSigner)
+                                onUrl(url)
+                            } catch (_: Exception) {}
+                        }
+                    }
+                },
+                onSendDm = { peerPubkey, content ->
+                    notificationsViewModel.sendDm(peerPubkey, content, activeSigner)
+                }
             )
 
             if (showNotifEmojiLibrary) {

@@ -211,7 +211,11 @@ class Relay(
                 return ws.send(message)
             }
         }
-        if (pendingMessages.size < maxPendingMessages) {
+        // REQ subscriptions are never queued — resyncSubscriptions re-sends them on
+        // reconnect via activeSubscriptions. Queueing REQs would cause drainPendingMessages
+        // and resyncSubscriptions to both fire the same REQ on reconnect, causing duplicate
+        // subscriptions and server-side errors.
+        if (!message.startsWith("[\"REQ\"") && pendingMessages.size < maxPendingMessages) {
             pendingMessages.add(message)
         }
         return false
@@ -252,7 +256,10 @@ class Relay(
             isConnected = false
             webSocket = null
             if (ws != null) {
-                synchronized(sendLock) { ws.cancel() }
+                // Graceful close — sends WebSocket CLOSE frame so the server knows
+                // we're leaving cleanly. Avoids RST-then-SYN storms on big relays
+                // that were actively streaming events when we backgrounded.
+                synchronized(sendLock) { ws.close(1001, null) }
             }
         }
     }

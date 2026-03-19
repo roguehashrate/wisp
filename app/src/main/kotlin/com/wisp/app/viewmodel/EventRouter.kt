@@ -101,6 +101,7 @@ class EventRouter(
                     5 -> eventRepo.addEvent(event)
                     6 -> eventRepo.addEvent(event)
                     7 -> eventRepo.addEvent(event)
+                    Nip88.KIND_POLL_RESPONSE -> eventRepo.addEvent(event)
                     9735 -> {
                         eventRepo.addEvent(event)
                         eventRepo.addEventRelay(event.id, relayUrl)
@@ -204,7 +205,7 @@ class EventRouter(
             // (engagement subs fetch reposts for all viewed posts, not just ours).
             val myPubkey = getUserPubkey()
             val isNotifEligible = myPubkey != null && event.pubkey != myPubkey &&
-                event.kind in intArrayOf(1, 6, 7, 9735) &&
+                event.kind in intArrayOf(1, 6, 7, 9735, Nip88.KIND_POLL_RESPONSE) &&
                 !muteRepo.isBlocked(event.pubkey)
             val isRepostOfOther = event.kind == 6 && run {
                 val repostedId = event.tags.lastOrNull { it.size >= 2 && it[0] == "e" }?.get(1)

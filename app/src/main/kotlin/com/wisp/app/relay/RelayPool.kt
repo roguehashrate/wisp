@@ -746,6 +746,15 @@ class RelayPool {
         relayIndex[url]?.let { existing ->
             // Don't use this path for ephemeral relays (they're in relayIndex too)
             if (!ephemeralRelays.containsKey(url)) {
+                val subId = extractSubId(message)
+                if (subId != null) {
+                    if (!subscriptionTracker.hasCapacity(url, subId)) {
+                        Log.d("RLC", "[Pool] sendToRelayOrEphemeral($url) SKIPPED sub=$subId — no capacity")
+                        return false
+                    }
+                    subscriptionTracker.track(url, subId)
+                    trackSubscription(url, subId, message)
+                }
                 existing.send(message)
                 return true
             }
@@ -878,12 +887,16 @@ class RelayPool {
         // an OS sleep; the socket may be dead even though the flag says true.
         for (relay in relays) {
             relay.resetBackoff()
+            relay.reconnectEnabled = false  // Suppress error emissions from the disconnect below
             relay.disconnect()
+            subscriptionTracker.untrackRelay(relay.config.url)
             relay.connect()
         }
         for (relay in dmRelays) {
             relay.resetBackoff()
+            relay.reconnectEnabled = false  // Suppress error emissions from the disconnect below
             relay.disconnect()
+            subscriptionTracker.untrackRelay(relay.config.url)
             relay.connect()
         }
         // Evict ALL ephemeral relays — they'll be recreated on demand.

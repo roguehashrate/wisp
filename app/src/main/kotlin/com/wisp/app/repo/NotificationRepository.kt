@@ -6,9 +6,12 @@ import android.util.LruCache
 import com.wisp.app.nostr.Nip10
 import com.wisp.app.nostr.Nip30
 import com.wisp.app.nostr.Nip57
+import com.wisp.app.nostr.Nip88
 import com.wisp.app.nostr.NostrEvent
+import com.wisp.app.nostr.FlatNotificationItem
 import com.wisp.app.nostr.NotificationGroup
 import com.wisp.app.nostr.NotificationSummary
+import com.wisp.app.nostr.NotificationType
 import com.wisp.app.nostr.ZapEntry
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +35,11 @@ class NotificationRepository(
 
     private val _notifications = MutableStateFlow<List<NotificationGroup>>(emptyList())
     val notifications: StateFlow<List<NotificationGroup>> = _notifications
+
+    private val flatItems = mutableListOf<FlatNotificationItem>()
+    private val flatItemIds = mutableSetOf<String>()
+    private val _flatNotifications = MutableStateFlow<List<FlatNotificationItem>>(emptyList())
+    val flatNotifications: StateFlow<List<FlatNotificationItem>> = _flatNotifications
 
     private val _summary24h = MutableStateFlow(NotificationSummary())
     val summary24h: StateFlow<NotificationSummary> = _summary24h
@@ -62,7 +70,13 @@ class NotificationRepository(
         val hasPTag = event.tags.any { it.size >= 2 && it[0] == "p" && it[1] == myPubkey }
         // Kind 6 reposts may omit the p-tag; callers must pre-filter kind 6 ownership.
         // replyToMyEvent bypasses p-tag check for kind 1 replies found via e-tag subscription.
-        if (!hasPTag && event.kind != 6 && !(replyToMyEvent && event.kind == 1)) return
+        if (!hasPTag && event.kind != 6 && event.kind != Nip88.KIND_POLL_RESPONSE && !(replyToMyEvent && event.kind == 1)) return
+        // Kind 1018 poll votes: only notify if the poll is ours
+        if (event.kind == Nip88.KIND_POLL_RESPONSE) {
+            val pollId = Nip88.getPollEventId(event)
+            val pollEvent = pollId?.let { eventRepo?.getEvent(it) }
+            if (pollEvent == null || pollEvent.pubkey != myPubkey) return
+        }
 
         synchronized(lock) {
             // Atomic check-then-put inside lock to prevent race when the same
@@ -79,6 +93,7 @@ class NotificationRepository(
                 7 -> mergeReaction(event)
                 1 -> mergeKind1(event)
                 9735 -> mergeZap(event)
+                Nip88.KIND_POLL_RESPONSE -> mergeVote(event)
                 else -> false
             }
             if (!merged) return
@@ -121,7 +136,10 @@ class NotificationRepository(
             seenEvents.evictAll()
             groupMap.clear()
             zapEventIdsByGroup.clear()
+            flatItems.clear()
+            flatItemIds.clear()
             _notifications.value = emptyList()
+            _flatNotifications.value = emptyList()
             _summary24h.value = NotificationSummary()
             _hasUnread.value = false
             soundEligibleAfter = System.currentTimeMillis() / 1000
@@ -160,6 +178,9 @@ class NotificationRepository(
 
         toRemove.forEach { groupMap.remove(it) }
         toUpdate.forEach { (k, v) -> groupMap[k] = v }
+        flatItems.removeAll { item ->
+            if (item.actorPubkey == pubkey) { flatItemIds.remove(item.id); true } else false
+        }
         if (toRemove.isNotEmpty() || toUpdate.isNotEmpty()) {
             rebuildSortedList()
         }
@@ -231,6 +252,9 @@ class NotificationRepository(
 
         val sorted = result.sortedByDescending { it.latestTimestamp }
         _notifications.value = if (sorted.size > 200) sorted.take(200) else sorted
+
+        val sortedFlat = flatItems.sortedByDescending { it.timestamp }
+        _flatNotifications.value = if (sortedFlat.size > 500) sortedFlat.take(500) else sortedFlat
 
         // Compute 24h summary from raw groupMap (not the split result)
         val summaryCutoff = now - SUMMARY_WINDOW_SECONDS
@@ -326,6 +350,22 @@ class NotificationRepository(
                 latestTimestamp = event.created_at
             )
         }
+
+        val shortcode = Nip30.shortcodeRegex.matchEntire(emoji)?.groupValues?.get(1)
+        val flatEmojiUrl = eventEmojiUrls[shortcode ?: ""]
+        val flatId = "reaction:${referencedId}:${event.pubkey}:${emoji.hashCode()}"
+        if (flatItemIds.add(flatId)) {
+            flatItems.add(FlatNotificationItem(
+                id = flatId,
+                type = NotificationType.REACTION,
+                actorPubkey = event.pubkey,
+                referencedEventId = referencedId,
+                timestamp = event.created_at,
+                emoji = emoji,
+                emojiUrl = flatEmojiUrl
+            ))
+        }
+
         return true
     }
 
@@ -375,6 +415,21 @@ class NotificationRepository(
                 latestTimestamp = event.created_at
             )
         }
+
+        val flatZapId = "zap:${event.id}"
+        if (flatItemIds.add(flatZapId)) {
+            flatItems.add(FlatNotificationItem(
+                id = flatZapId,
+                type = NotificationType.ZAP,
+                actorPubkey = zapperPubkey,
+                referencedEventId = referencedId,
+                timestamp = event.created_at,
+                zapSats = amount,
+                zapMessage = message,
+                isPrivateZap = isPrivate
+            ))
+        }
+
         return true
     }
 
@@ -399,6 +454,19 @@ class NotificationRepository(
             referencedEventHints = hints,
             latestTimestamp = event.created_at
         )
+
+        val flatReplyId = "reply:${event.id}"
+        if (flatItemIds.add(flatReplyId)) {
+            flatItems.add(FlatNotificationItem(
+                id = flatReplyId,
+                type = NotificationType.REPLY,
+                actorPubkey = event.pubkey,
+                referencedEventId = replyTarget,
+                timestamp = event.created_at,
+                replyEventId = event.id
+            ))
+        }
+
         return true
     }
 
@@ -413,6 +481,19 @@ class NotificationRepository(
             relayHints = listOfNotNull(hint),
             latestTimestamp = event.created_at
         )
+
+        val flatQuoteId = "quote:${event.id}"
+        if (flatItemIds.add(flatQuoteId)) {
+            flatItems.add(FlatNotificationItem(
+                id = flatQuoteId,
+                type = NotificationType.QUOTE,
+                actorPubkey = event.pubkey,
+                referencedEventId = quotedEventId,
+                timestamp = event.created_at,
+                quoteEventId = event.id
+            ))
+        }
+
         return true
     }
 
@@ -424,6 +505,18 @@ class NotificationRepository(
             eventId = event.id,
             latestTimestamp = event.created_at
         )
+
+        val flatMentionId = "mention:${event.id}"
+        if (flatItemIds.add(flatMentionId)) {
+            flatItems.add(FlatNotificationItem(
+                id = flatMentionId,
+                type = NotificationType.MENTION,
+                actorPubkey = event.pubkey,
+                referencedEventId = event.id,
+                timestamp = event.created_at
+            ))
+        }
+
         return true
     }
 
@@ -457,6 +550,38 @@ class NotificationRepository(
                 latestTimestamp = event.created_at
             )
         }
+
+        val flatRepostId = "repost:${repostedId}:${event.pubkey}"
+        if (flatItemIds.add(flatRepostId)) {
+            flatItems.add(FlatNotificationItem(
+                id = flatRepostId,
+                type = NotificationType.REPOST,
+                actorPubkey = event.pubkey,
+                referencedEventId = repostedId,
+                timestamp = event.created_at
+            ))
+        }
+
+        return true
+    }
+
+    private fun mergeVote(event: NostrEvent): Boolean {
+        val pollEventId = Nip88.getPollEventId(event) ?: return false
+        val optionIds = Nip88.getResponseOptionIds(event)
+        if (optionIds.isEmpty()) return false
+
+        val flatVoteId = "vote:${event.id}"
+        if (flatItemIds.add(flatVoteId)) {
+            flatItems.add(FlatNotificationItem(
+                id = flatVoteId,
+                type = NotificationType.VOTE,
+                actorPubkey = event.pubkey,
+                referencedEventId = pollEventId,
+                timestamp = event.created_at,
+                voteOptionIds = optionIds
+            ))
+        }
+
         return true
     }
 
@@ -493,6 +618,9 @@ class NotificationRepository(
         }
         if (toRemove.isNotEmpty()) {
             toRemove.forEach { groupMap.remove(it) }
+            flatItems.removeAll { item ->
+                if (item.referencedEventId == rootEventId) { flatItemIds.remove(item.id); true } else false
+            }
             rebuildSortedList()
         }
     }
