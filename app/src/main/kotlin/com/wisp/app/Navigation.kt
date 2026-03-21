@@ -30,6 +30,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import android.app.Activity
+import android.app.Application
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
@@ -37,7 +38,6 @@ import com.wisp.app.nostr.Nip10
 import com.wisp.app.nostr.Nip19
 import com.wisp.app.nostr.NostrUriData
 import com.wisp.app.nostr.NostrEvent
-import com.wisp.app.nostr.ProfileData
 import com.wisp.app.nostr.LocalSigner
 import com.wisp.app.nostr.RemoteSigner
 import com.wisp.app.nostr.SignerIntentBridge
@@ -195,8 +195,7 @@ fun WispNavHost(
     // Reactive: recomposes on login, logout, and account switch
     val context = LocalContext.current
     val signingMode by authViewModel.signingModeFlow.collectAsState()
-    val npub by authViewModel.npub.collectAsState()
-    val activeSigner = remember(signingMode, npub) {
+    val activeSigner = remember(signingMode) {
         when (signingMode) {
             SigningMode.REMOTE -> {
                 val pubkey = authViewModel.keyRepo.getPubkeyHex() ?: ""
@@ -246,7 +245,6 @@ fun WispNavHost(
     val accounts by authViewModel.accountsFlow.collectAsState()
 
     val onSwitchAccount: (String) -> Unit = { pubkeyHex ->
-        feedViewModel.clearSigner()
         feedViewModel.resetForAccountSwitch()
         walletViewModel.suspendForAccountSwitch()  // disconnect only, preserve credentials
         authViewModel.switchAccount(pubkeyHex)
@@ -364,11 +362,7 @@ fun WispNavHost(
 
     // Initialize notifications viewmodel with shared repos
     LaunchedEffect(Unit) {
-        notificationsViewModel.init(
-            feedViewModel.notifRepo, feedViewModel.eventRepo, feedViewModel.contactRepo,
-            feedViewModel.dmRepo, feedViewModel.relayPool, feedViewModel.relayListRepo,
-            feedViewModel.powPrefs
-        )
+        notificationsViewModel.init(feedViewModel.notifRepo, feedViewModel.eventRepo, feedViewModel.contactRepo)
     }
 
     // Resolve deep link URI to a navigation route
@@ -472,21 +466,6 @@ fun WispNavHost(
     LaunchedEffect(Unit) {
         notificationsViewModel.replyReceived.collect {
             if (currentNotifSoundEnabled) HapticHelper.pulse()
-        }
-    }
-    LaunchedEffect(Unit) {
-        notificationsViewModel.dmReceived.collect {
-            isReplyAnimating = true
-            kotlinx.coroutines.delay(1000)
-            isReplyAnimating = false
-            if (currentNotifSoundEnabled) HapticHelper.pulse()
-        }
-    }
-    // Background decryption of pending DM gift wraps (remote signer mode)
-    val pendingDmCount by dmListViewModel.pendingDecryptCount.collectAsState()
-    LaunchedEffect(pendingDmCount, activeSigner) {
-        if (pendingDmCount > 0) {
-            activeSigner?.let { dmListViewModel.decryptPending(it) }
         }
     }
     LaunchedEffect(Unit) {
@@ -753,7 +732,6 @@ fun WispNavHost(
                 onSwitchAccount = onSwitchAccount,
                 onAddAccount = onAddAccount,
                 onLogout = {
-                    feedViewModel.clearSigner()
                     feedViewModel.resetForAccountSwitch()
                     walletViewModel.disconnectWallet()  // full clear — intentional logout
                     val hasRemaining = authViewModel.logOut()
@@ -872,12 +850,6 @@ fun WispNavHost(
         composable(Routes.DRAFTS) {
             LaunchedEffect(Unit) {
                 draftsViewModel.loadDrafts(feedViewModel.relayPool, activeSigner)
-                draftsViewModel.loadScheduledPosts(feedViewModel.relayPool, activeSigner)
-            }
-            val profileVersion by feedViewModel.eventRepo.profileVersion.collectAsState()
-            val userPubkey = feedViewModel.getUserPubkey()
-            val userProfile = remember(userPubkey, profileVersion) {
-                userPubkey?.let { feedViewModel.eventRepo.getProfileData(it) }
             }
             DraftsScreen(
                 viewModel = draftsViewModel,
@@ -914,11 +886,7 @@ fun WispNavHost(
                 },
                 onDeleteDraft = { dTag ->
                     draftsViewModel.deleteDraft(dTag, feedViewModel.relayPool, activeSigner)
-                },
-                onDeleteScheduled = { eventId ->
-                    draftsViewModel.deleteScheduledPost(eventId, feedViewModel.relayPool, activeSigner)
-                },
-                userProfile = userProfile
+                }
             )
         }
 
@@ -1057,17 +1025,7 @@ fun WispNavHost(
                 onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) },
                 resolvedEmojis = profileResolvedEmojis,
                 unicodeEmojis = profileUnicodeEmojis,
-                onOpenEmojiLibrary = { showProfileEmojiLibrary = true },
-                onSearchAuthor = {
-                    val authorProfile = userProfileViewModel.profile.value
-                        ?: ProfileData(pubkey = pubkey, name = null, displayName = null, about = null, picture = null, nip05 = null, banner = null, lud16 = null, updatedAt = 0)
-                    searchViewModel.prepareAuthorSearch(authorProfile)
-                    navController.navigate(Routes.SEARCH) {
-                        popUpTo(Routes.FEED) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
+                onOpenEmojiLibrary = { showProfileEmojiLibrary = true }
             )
             if (showProfileEmojiLibrary) {
                 com.wisp.app.ui.component.EmojiLibrarySheet(
@@ -1332,8 +1290,7 @@ fun WispNavHost(
                     tag = tag,
                     relayPool = feedViewModel.relayPool,
                     eventRepo = feedViewModel.eventRepo,
-                    topRelayUrls = feedViewModel.getScoredRelays().take(10).map { it.url },
-                    muteRepo = feedViewModel.muteRepo
+                    topRelayUrls = feedViewModel.getScoredRelays().take(10).map { it.url }
                 )
             }
             val hashtagNoteActions = remember {
@@ -1424,8 +1381,7 @@ fun WispNavHost(
                     name = name,
                     relayPool = feedViewModel.relayPool,
                     eventRepo = feedViewModel.eventRepo,
-                    topRelayUrls = feedViewModel.getScoredRelays().take(10).map { it.url },
-                    muteRepo = feedViewModel.muteRepo
+                    topRelayUrls = feedViewModel.getScoredRelays().take(10).map { it.url }
                 )
             }
             val setFeedNoteActions = remember {
@@ -1670,8 +1626,10 @@ fun WispNavHost(
 
         composable(Routes.INTERFACE_SETTINGS) {
             val context = LocalContext.current
+            val application = context.applicationContext as Application
             val interfacePrefs = remember { com.wisp.app.repo.InterfacePreferences(context) }
             InterfaceScreen(
+                application = application,
                 interfacePrefs = interfacePrefs,
                 onBack = { navController.popBackStack() },
                 onChanged = onInterfaceChanged
@@ -1953,7 +1911,7 @@ fun WispNavHost(
             val scope = rememberCoroutineScope()
             BackHandler(onBack = onBack)
             LaunchedEffect(Unit) {
-                onboardingViewModel.startDiscovery(feedViewModel.sparkRepo, feedViewModel.walletModeRepo)
+                onboardingViewModel.startDiscovery(feedViewModel.sparkRepo)
             }
             OnboardingScreen(
                 viewModel = onboardingViewModel,
@@ -2039,8 +1997,6 @@ fun WispNavHost(
                 feedViewModel.refreshDmsAndNotifications()
                 notificationsViewModel.markRead()
             }
-
-            val notifReplyScope = rememberCoroutineScope()
             var notifZapTarget by remember { mutableStateOf<NostrEvent?>(null) }
             val notifZapInProgress by feedViewModel.zapInProgress.collectAsState()
             var notifZapAnimatingIds by remember { mutableStateOf(emptySet<String>()) }
@@ -2101,45 +2057,6 @@ fun WispNavHost(
                 onProfileClick = { pubkey ->
                     navController.navigate("profile/$pubkey")
                 },
-                onRefresh = { feedViewModel.refreshDmsAndNotifications() },
-                onSendReply = { replyToEvent, content ->
-                    val signer = activeSigner ?: return@NotificationsScreen
-                    notifReplyScope.launch {
-                        val hint = feedViewModel.outboxRouter?.getRelayHint(replyToEvent.pubkey) ?: ""
-                        val tags = com.wisp.app.nostr.Nip10.buildReplyTags(replyToEvent, hint)
-
-                        if (feedViewModel.powPrefs.isNotePowEnabled()) {
-                            feedViewModel.powManager.submitNote(
-                                signer = signer,
-                                content = content,
-                                tags = tags,
-                                kind = 1,
-                                replyToPubkey = replyToEvent.pubkey,
-                                onPublished = {
-                                    feedViewModel.eventRepo.addReplyCount(replyToEvent.id, "pow-pending")
-                                    val rootId = com.wisp.app.nostr.Nip10.getRootId(replyToEvent)
-                                    if (rootId != null && rootId != replyToEvent.id) {
-                                        feedViewModel.eventRepo.addReplyCount(rootId, "pow-pending")
-                                    }
-                                }
-                            )
-                        } else {
-                            val event = signer.signEvent(kind = 1, content = content, tags = tags)
-                            val msg = com.wisp.app.nostr.ClientMessage.event(event)
-                            if (feedViewModel.outboxRouter != null) {
-                                feedViewModel.outboxRouter!!.publishToInbox(msg, replyToEvent.pubkey)
-                            } else {
-                                feedViewModel.relayPool.sendToWriteRelays(msg)
-                            }
-                            feedViewModel.eventRepo.cacheEvent(event)
-                            feedViewModel.eventRepo.addReplyCount(replyToEvent.id, event.id)
-                            val rootId = com.wisp.app.nostr.Nip10.getRootId(replyToEvent)
-                            if (rootId != null && rootId != replyToEvent.id) {
-                                feedViewModel.eventRepo.addReplyCount(rootId, event.id)
-                            }
-                        }
-                    }
-                },
                 onReply = { event ->
                     replyTarget = event
                     quoteTarget = null
@@ -2171,25 +2088,9 @@ fun WispNavHost(
                 unicodeEmojis = notifUnicodeEmojis,
                 onOpenEmojiLibrary = { showNotifEmojiLibrary = true },
                 zapError = feedViewModel.zapError,
+                onRefresh = { feedViewModel.refreshDmsAndNotifications() },
                 translationRepo = feedViewModel.translationRepo,
-                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) },
-                onUploadMedia = { uris, onUrl ->
-                    notifReplyScope.launch {
-                        for (uri in uris) {
-                            try {
-                                val inputStream = context.contentResolver.openInputStream(uri)
-                                val bytes = inputStream?.use { it.readBytes() } ?: continue
-                                val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
-                                val ext = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "bin"
-                                val url = feedViewModel.blossomRepo.uploadMedia(bytes, mimeType, ext, activeSigner)
-                                onUrl(url)
-                            } catch (_: Exception) {}
-                        }
-                    }
-                },
-                onSendDm = { peerPubkey, content ->
-                    notificationsViewModel.sendDm(peerPubkey, content, activeSigner)
-                }
+                onPollVote = { pollId, optionIds -> feedViewModel.publishPollVote(pollId, optionIds) }
             )
 
             if (showNotifEmojiLibrary) {

@@ -72,9 +72,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wisp.app.nostr.FollowSet
 import com.wisp.app.nostr.NostrEvent
+import com.wisp.app.R
 import com.wisp.app.ui.component.NoteActions
 import com.wisp.app.ui.component.EmojiLibrarySheet
 import com.wisp.app.ui.component.PostCard
@@ -430,10 +432,10 @@ fun FeedScreen(
     if (zapErrorMessage != null) {
         AlertDialog(
             onDismissRequest = { zapErrorMessage = null },
-            title = { Text("Zap Failed") },
+            title = { Text(stringResource(R.string.zap_failed)) },
             text = { Text(zapErrorMessage ?: "") },
             confirmButton = {
-                TextButton(onClick = { zapErrorMessage = null }) { Text("OK") }
+                TextButton(onClick = { zapErrorMessage = null }) { Text(stringResource(R.string.btn_ok)) }
             }
         )
     }
@@ -441,21 +443,21 @@ fun FeedScreen(
     if (showSocialGraphDialog) {
         AlertDialog(
             onDismissRequest = { showSocialGraphDialog = false },
-            title = { Text("Social graph required") },
+            title = { Text(stringResource(R.string.error_social_graph_required)) },
             text = {
-                Text("The extended feed shows posts from friends-of-friends. You need to compute your social graph first.")
+                Text(stringResource(R.string.error_extended_feed_description))
             },
             confirmButton = {
                 Button(onClick = {
                     showSocialGraphDialog = false
                     onSocialGraph()
                 }) {
-                    Text("Go to Social Graph")
+                    Text(stringResource(R.string.btn_go_to_social_graph))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSocialGraphDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )
@@ -578,15 +580,15 @@ fun FeedScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         val feedLabel = when (feedType) {
-                                            FeedType.FOLLOWS -> "Follows"
-                                            FeedType.EXTENDED_FOLLOWS -> "Extended"
+                                            FeedType.FOLLOWS -> stringResource(R.string.tab_follows)
+                                            FeedType.EXTENDED_FOLLOWS -> stringResource(R.string.tab_extended)
                                             FeedType.RELAY -> if (selectedRelay != null) {
                                                 selectedRelay!!.removePrefix("wss://").removeSuffix("/")
-                                            } else "Relay"
+                                            } else stringResource(R.string.tab_relay)
                                             FeedType.LIST -> if (selectedList != null) {
                                                 selectedList!!.name
-                                            } else "List"
-                                            FeedType.TRENDING -> "Trending"
+                                            } else stringResource(R.string.tab_list)
+                                            FeedType.TRENDING -> stringResource(R.string.tab_trending)
                                         }
                                         Text(
                                             feedLabel,
@@ -607,8 +609,8 @@ fun FeedScreen(
                                     expanded = showFeedTypeDropdown,
                                     onDismissRequest = { showFeedTypeDropdown = false }
                                 ) {
-                                    DropdownMenuItem(
-                                        text = { Text("Follows") },
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tab_follows)) },
                                         onClick = {
                                             showFeedTypeDropdown = false
                                             viewModel.setFeedType(FeedType.FOLLOWS)
@@ -617,8 +619,8 @@ fun FeedScreen(
                                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                                         }} else null
                                     )
-                                    DropdownMenuItem(
-                                        text = { Text("Extended") },
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tab_extended)) },
                                         onClick = {
                                             showFeedTypeDropdown = false
                                             if (viewModel.extendedNetworkRepo.cachedNetwork.value == null) {
@@ -631,8 +633,8 @@ fun FeedScreen(
                                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                                         }} else null
                                     )
-                                    DropdownMenuItem(
-                                        text = { Text("Trending") },
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tab_trending)) },
                                         onClick = {
                                             showFeedTypeDropdown = false
                                             viewModel.setFeedType(FeedType.TRENDING)
@@ -641,8 +643,8 @@ fun FeedScreen(
                                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                                         }} else null
                                     )
-                                    DropdownMenuItem(
-                                        text = { Text("Relay") },
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tab_relay)) },
                                         onClick = {
                                             showFeedTypeDropdown = false
                                             showRelayPicker = true
@@ -651,8 +653,8 @@ fun FeedScreen(
                                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                                         }} else null
                                     )
-                                    DropdownMenuItem(
-                                        text = { Text("List") },
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tab_list)) },
                                         onClick = {
                                             showFeedTypeDropdown = false
                                             showListPicker = true
@@ -661,8 +663,8 @@ fun FeedScreen(
                                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                                         }} else null
                                     )
-                                    DropdownMenuItem(
-                                        text = { Text("Hashtags") },
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tab_hashtags)) },
                                         onClick = {
                                             showFeedTypeDropdown = false
                                             showHashtagPicker = true
@@ -840,7 +842,7 @@ fun FeedScreen(
                                     )
                                     Spacer(Modifier.height(12.dp))
                                     Button(onClick = { onSocialGraph() }) {
-                                        Text("Go to Social Graph")
+                                        Text(stringResource(R.string.btn_go_to_social_graph))
                                     }
                                 }
                             }
@@ -962,7 +964,7 @@ fun FeedScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         TextButton(onClick = { viewModel.loadMore() }) {
-                                            Text("Load more")
+                                            Text(stringResource(R.string.btn_load_more))
                                         }
                                     }
                                 }
@@ -1745,8 +1747,9 @@ private fun HashtagPickerDialog(
     var confirmDeleteDTag by remember { mutableStateOf<String?>(null) }
     var showNewSetField by remember { mutableStateOf(false) }
     val newSetFocusRequester = remember { FocusRequester() }
+    // First set always expanded by default
     var expandedDTags by remember(sets.size) {
-        mutableStateOf(emptySet<String>())
+        mutableStateOf(sets.firstOrNull()?.let { setOf(it.dTag) } ?: emptySet())
     }
 
     AlertDialog(
@@ -1855,7 +1858,7 @@ private fun HashtagPickerDialog(
                                             }
                                         )
                                 )
-                                if (set.hashtags.isNotEmpty()) {
+                                if (isExpanded && set.hashtags.isNotEmpty()) {
                                     TextButton(
                                         onClick = { onViewSetFeed(set) },
                                         modifier = Modifier.heightIn(min = 32.dp),
@@ -1946,7 +1949,7 @@ private fun HashtagPickerDialog(
                                 }
                             }
                         }
-                        Spacer(Modifier.size(6.dp))
+                        Spacer(Modifier.size(8.dp))
                     }
                 }
                 if (showNewSetField) {
@@ -2044,7 +2047,7 @@ private fun NewNotesButton(
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        "$count new notes",
+                        stringResource(R.string.new_notes_button, count),
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
@@ -2055,14 +2058,14 @@ private fun NewNotesButton(
                 onDismissRequest = { showMenu = false }
             ) {
                 DropdownMenuItem(
-                    text = { Text("Hide until app restart") },
+                    text = { Text(stringResource(R.string.new_notes_hide_temporary)) },
                     onClick = {
                         showMenu = false
                         onHide(false)
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Hide forever") },
+                    text = { Text(stringResource(R.string.new_notes_hide_forever)) },
                     onClick = {
                         showMenu = false
                         onHide(true)
@@ -2729,7 +2732,7 @@ fun BroadcastStatusBar(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Mining PoW (${powStatus.attempts / 1000}k)...",
+                            text = stringResource(R.string.broadcast_mining, powStatus.attempts / 1000),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -2741,7 +2744,7 @@ fun BroadcastStatusBar(
                             ) {
                                 Icon(
                                     Icons.Default.Close,
-                                    contentDescription = "Cancel mining",
+                                    contentDescription = stringResource(R.string.broadcast_cancel_mining),
                                     modifier = Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -2775,9 +2778,10 @@ fun BroadcastStatusBar(
                         }
                         Text(
                             text = if (state.accepted < state.sent) {
-                                "Broadcasting (${state.accepted}/${state.sent})"
+                                stringResource(R.string.broadcast_broadcasting, state.accepted, state.sent)
                             } else {
-                                "Published to ${state.accepted} relay${if (state.accepted != 1) "s" else ""}"
+                                if (state.accepted != 1) stringResource(R.string.broadcast_published_plural, state.accepted)
+                                else stringResource(R.string.broadcast_published, state.accepted)
                             },
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

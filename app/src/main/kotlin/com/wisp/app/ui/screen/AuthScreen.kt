@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -91,11 +92,11 @@ fun AuthScreen(
     ) {
         Image(
             painter = painterResource(R.drawable.ic_launcher_foreground),
-            contentDescription = "Wisp logo",
+            contentDescription = stringResource(R.string.onboarding_wisp_logo),
             modifier = Modifier.size(108.dp)
         )
         Text(
-            text = "wisp",
+            text = stringResource(R.string.auth_wisp),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,
@@ -105,7 +106,7 @@ fun AuthScreen(
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "a wee interface to scroll posts",
+            text = stringResource(R.string.auth_tagline),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -135,7 +136,7 @@ fun AuthScreen(
                 } else {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_tor_onion),
-                        contentDescription = "Toggle Tor",
+                        contentDescription = stringResource(R.string.cd_toggle_tor),
                         modifier = Modifier.size(18.dp),
                         tint = when (torStatus) {
                             TorStatus.CONNECTED -> MaterialTheme.colorScheme.primary
@@ -148,10 +149,10 @@ fun AuthScreen(
             Spacer(Modifier.width(8.dp))
             Text(
                 text = when (torStatus) {
-                    TorStatus.STARTING -> "Connecting to Tor..."
-                    TorStatus.CONNECTED -> "Connected via Tor"
-                    TorStatus.ERROR -> "Tor error"
-                    else -> "Connect via Tor"
+                    TorStatus.STARTING -> stringResource(R.string.auth_connecting_to_tor)
+                    TorStatus.CONNECTED -> stringResource(R.string.auth_connected_via_tor)
+                    TorStatus.ERROR -> stringResource(R.string.auth_tor_error)
+                    else -> stringResource(R.string.auth_connect_via_tor)
                 },
                 style = MaterialTheme.typography.labelMedium,
                 color = when (torStatus) {
@@ -170,7 +171,7 @@ fun AuthScreen(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Sign Up")
+            Text(stringResource(R.string.auth_sign_up))
         }
 
         Spacer(Modifier.height(24.dp))
@@ -178,7 +179,7 @@ fun AuthScreen(
         Spacer(Modifier.height(24.dp))
 
         Text(
-            text = "Or log in with your key",
+            text = stringResource(R.string.auth_or_log_in_with_key),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -187,7 +188,7 @@ fun AuthScreen(
         OutlinedTextField(
             value = nsecInput,
             onValueChange = { viewModel.updateNsecInput(it) },
-            label = { Text("nsec or npub...") },
+            label = { Text(stringResource(R.string.auth_nsec_or_npub)) },
             singleLine = true,
             visualTransformation = if (nsecVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -195,7 +196,7 @@ fun AuthScreen(
                 IconButton(onClick = { nsecVisible = !nsecVisible }) {
                     Icon(
                         imageVector = if (nsecVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                        contentDescription = if (nsecVisible) "Hide key" else "Show key"
+                        contentDescription = if (nsecVisible) stringResource(R.string.auth_hide_key) else stringResource(R.string.auth_show_key)
                     )
                 }
             },
@@ -210,7 +211,7 @@ fun AuthScreen(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Log In")
+            Text(stringResource(R.string.auth_log_in))
         }
 
         if (signerAvailable) {
@@ -226,7 +227,7 @@ fun AuthScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Login with Signer")
+                Text(stringResource(R.string.auth_login_with_signer))
             }
         }
 
