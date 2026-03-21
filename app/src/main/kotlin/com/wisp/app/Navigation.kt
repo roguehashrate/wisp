@@ -850,6 +850,12 @@ fun WispNavHost(
         composable(Routes.DRAFTS) {
             LaunchedEffect(Unit) {
                 draftsViewModel.loadDrafts(feedViewModel.relayPool, activeSigner)
+                draftsViewModel.loadScheduledPosts(feedViewModel.relayPool, activeSigner)
+            }
+            val profileVersion by feedViewModel.eventRepo.profileVersion.collectAsState()
+            val userPubkey = feedViewModel.getUserPubkey()
+            val userProfile = remember(userPubkey, profileVersion) {
+                userPubkey?.let { feedViewModel.eventRepo.getProfileData(it) }
             }
             DraftsScreen(
                 viewModel = draftsViewModel,
@@ -886,7 +892,11 @@ fun WispNavHost(
                 },
                 onDeleteDraft = { dTag ->
                     draftsViewModel.deleteDraft(dTag, feedViewModel.relayPool, activeSigner)
-                }
+                },
+                onDeleteScheduled = { eventId ->
+                    draftsViewModel.deleteScheduledPost(eventId, feedViewModel.relayPool, activeSigner)
+                },
+                userProfile = userProfile
             )
         }
 
