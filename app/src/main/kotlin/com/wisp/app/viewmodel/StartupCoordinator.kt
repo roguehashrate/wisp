@@ -340,12 +340,7 @@ class StartupCoordinator(
                 val myPubkey = getUserPubkey() ?: return@collect
                 val dmRelayUrls = relayPool.getDmRelayUrls()
                 if (relayUrl in dmRelayUrls || relayUrl in relayPool.getRelayUrls()) {
-                    val latestGwrapTs = dmRepo.getLatestGiftWrapTimestamp()
-                    val dmFilter = if (latestGwrapTs != null) {
-                        Filter(kinds = listOf(1059), pTags = listOf(myPubkey), since = latestGwrapTs - 2 * 24 * 3600L)
-                    } else {
-                        Filter(kinds = listOf(1059), pTags = listOf(myPubkey))
-                    }
+                    val dmFilter = Filter(kinds = listOf(1059), pTags = listOf(myPubkey))
                     relayPool.sendToRelay(relayUrl, ClientMessage.req("dms", dmFilter))
                 }
             }
@@ -646,15 +641,10 @@ class StartupCoordinator(
     fun subscribeDmsAndNotifications(myPubkey: String) {
         notifRepo.soundEligibleAfter = System.currentTimeMillis() / 1000
         dmRepo.soundEligibleAfter = System.currentTimeMillis() / 1000
-        // Use `since` if we've seen gift wraps before, subtracting 2 days to account for
-        // NIP-17's randomized gift wrap timestamps (which can be up to 2 days before actual send time).
-        val latestGiftWrapTs = dmRepo.getLatestGiftWrapTimestamp()
-        val dmFilter = if (latestGiftWrapTs != null) {
-            Filter(kinds = listOf(1059), pTags = listOf(myPubkey), since = latestGiftWrapTs - 2 * 24 * 3600L)
-        } else {
-            Filter(kinds = listOf(1059), pTags = listOf(myPubkey))
-        }
-        val dmReqMsg = ClientMessage.req("dms", dmFilter)
+        // NIP-17 gift wraps use randomized timestamps (up to 2 days in the past), making
+        // a `since` filter unreliable — it would silently drop DMs from older conversations
+        // and suppress the unread badge. DMs are low-volume; fetch without restriction.
+        val dmReqMsg = ClientMessage.req("dms", Filter(kinds = listOf(1059), pTags = listOf(myPubkey)))
         relayPool.sendToAll(dmReqMsg)
         relayPool.sendToDmRelays(dmReqMsg)
         scope.launch {
