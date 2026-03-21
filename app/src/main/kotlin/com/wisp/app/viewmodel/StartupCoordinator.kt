@@ -562,6 +562,18 @@ class StartupCoordinator(
         // reactively for them to arrive before concluding the user has no DM relays.
         applyDefaultDmRelaysIfEmpty(myPubkey)
 
+        // Seed NotificationRepository from ObjectBox before subscribing to relays —
+        // kinds 1, 6, 7, 9735 are already persisted, so cached notifications appear
+        // immediately without waiting for relay responses. addEvent handles all
+        // p-tag / ownership filtering, so we can pass events through unfiltered.
+        eventPersistence?.let { persistence ->
+            scope.launch(processingContext) {
+                val cached = persistence.getRecentNotificationEvents(limit = 500)
+                for (event in cached) notifRepo.addEvent(event, myPubkey)
+                Log.d("StartupCoord", "Seeded notifRepo with ${cached.size} cached events")
+            }
+        }
+
         // DMs and notifications are not feed-blocking — fire and forget
         subscribeDmsAndNotifications(myPubkey)
     }
@@ -652,12 +664,10 @@ class StartupCoordinator(
             Log.d("StartupCoord", "DM subscription (re)established")
         }
 
-        val latestNotifTs = notifRepo.getLatestNotifTimestamp()
         val notifFilter = Filter(
             kinds = listOf(1, 6, 7, 9735),
             pTags = listOf(myPubkey),
-            limit = 300,
-            since = latestNotifTs?.let { it - 5 * 60 }  // 5-min buffer for clock skew
+            limit = 300
         )
         val notifReqMsg = ClientMessage.req("notif", notifFilter)
         relayPool.sendToReadRelays(notifReqMsg)
