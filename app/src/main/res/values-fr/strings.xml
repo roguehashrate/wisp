@@ -419,6 +419,9 @@
     <string name="loading_expanding_relays">Connexion à %d relais étendus…</string>
     <string name="loading_subscribing">Abonnement au flux…</string>
     <string name="loading_notes">Chargement des notes…</string>
+    <string name="loading_connecting_relays">Connexion aux relais…</string>
+    <string name="loading_finding_posts">Recherche de publications…</string>
+    <string name="loading_preparing_feed">Préparation de votre flux…</string>
     <string name="error_list_not_found">Liste non trouvée</string>
     <string name="error_no_list_members">Cette liste n\'a pas de membres</string>
 

@@ -419,6 +419,9 @@
     <string name="loading_expanding_relays">正在连接 %d 个扩展中继…</string>
     <string name="loading_subscribing">正在订阅动态…</string>
     <string name="loading_notes">正在加载帖子…</string>
+    <string name="loading_connecting_relays">正在连接中继…</string>
+    <string name="loading_finding_posts">正在寻找帖子…</string>
+    <string name="loading_preparing_feed">正在准备动态…</string>
     <string name="error_list_not_found">未找到列表</string>
     <string name="error_no_list_members">此列表没有成员</string>
 

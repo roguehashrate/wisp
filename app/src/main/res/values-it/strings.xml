@@ -400,6 +400,18 @@
     <string name="translate_translating">Traduzione…</string>
     <string name="translate_translated_from">Tradotto dal %s</string>
 
+    <!-- Loading -->
+    <string name="loading_searching_profile">Ricerca del tuo profilo…</string>
+    <string name="loading_finding_friends">Trovare i tuoi amici…</string>
+    <string name="loading_finding_friends_progress">Trovare i tuoi amici… %d/%d</string>
+    <string name="loading_discovering_network">Scoperta della rete estesa… %d/%d</string>
+    <string name="loading_expanding_relays">Connessione a %d relay estesi…</string>
+    <string name="loading_subscribing">Iscrizione al feed…</string>
+    <string name="loading_notes">Caricamento note…</string>
+    <string name="loading_connecting_relays">Connessione ai relay…</string>
+    <string name="loading_finding_posts">Ricerca post…</string>
+    <string name="loading_preparing_feed">Preparazione del tuo feed…</string>
+
     <!-- Errors / Alerts -->
     <string name="error_social_graph_required">Grafo sociale richiesto</string>
     <string name="error_extended_feed_description">Il feed esteso mostra post di amici-di-amici. Devi prima calcolare il tuo grafo sociale.</string>

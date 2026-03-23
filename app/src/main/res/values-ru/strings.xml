@@ -392,6 +392,9 @@
     <string name="loading_expanding_relays">Подключение к %d расширенным рилэям…</string>
     <string name="loading_subscribing">Подписка на ленту…</string>
     <string name="loading_notes">Загрузка заметок…</string>
+    <string name="loading_connecting_relays">Подключение к рилэям…</string>
+    <string name="loading_finding_posts">Поиск публикаций…</string>
+    <string name="loading_preparing_feed">Подготовка вашей ленты…</string>
     <string name="error_list_not_found">Список не найден</string>
     <string name="error_no_list_members">В этом списке нет участников</string>
     <string name="menu_add_to_relay_set">Добавить в набор рилэев</string>

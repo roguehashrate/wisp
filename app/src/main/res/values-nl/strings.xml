@@ -419,6 +419,9 @@
     <string name="loading_expanding_relays">Verbinden met %d uitgebreide relays…</string>
     <string name="loading_subscribing">Abonneren op feed…</string>
     <string name="loading_notes">Notities laden…</string>
+    <string name="loading_connecting_relays">Verbinden met relays…</string>
+    <string name="loading_finding_posts">Zoeken naar berichten…</string>
+    <string name="loading_preparing_feed">Je feed voorbereiden…</string>
     <string name="error_list_not_found">Lijst niet gevonden</string>
     <string name="error_no_list_members">Deze lijst heeft geen leden</string>
 

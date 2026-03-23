@@ -419,6 +419,9 @@
     <string name="loading_expanding_relays">%d個拡張リレーに接続中…</string>
     <string name="loading_subscribing">フィードを購読中…</string>
     <string name="loading_notes">ノートを読み込み中…</string>
+    <string name="loading_connecting_relays">リレーに接続中…</string>
+    <string name="loading_finding_posts">投稿を検索中…</string>
+    <string name="loading_preparing_feed">フィードを準備中…</string>
     <string name="error_list_not_found">リストが見つかりません</string>
     <string name="error_no_list_members">このリストにはメンバーがいません</string>
 

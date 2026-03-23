@@ -407,6 +407,9 @@
     <string name="loading_expanding_relays">Connecting to %d extended relays…</string>
     <string name="loading_subscribing">Subscribing to feed…</string>
     <string name="loading_notes">Loading notes…</string>
+    <string name="loading_connecting_relays">Connecting to relays…</string>
+    <string name="loading_finding_posts">Finding posts…</string>
+    <string name="loading_preparing_feed">Preparing your feed…</string>
     <string name="error_list_not_found">List not found</string>
     <string name="error_no_list_members">This list has no members</string>
 

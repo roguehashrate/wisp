@@ -419,6 +419,9 @@
     <string name="loading_expanding_relays">Verbinde mit %d erweiterten Relays…</string>
     <string name="loading_subscribing">Abonniere Feed…</string>
     <string name="loading_notes">Lade Notizen…</string>
+    <string name="loading_connecting_relays">Verbinde mit Relays…</string>
+    <string name="loading_finding_posts">Suche Beiträge…</string>
+    <string name="loading_preparing_feed">Bereite Feed vor…</string>
     <string name="error_list_not_found">Liste nicht gefunden</string>
     <string name="error_no_list_members">Diese Liste hat keine Mitglieder</string>
 
