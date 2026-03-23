@@ -412,6 +412,18 @@
     <string name="translate_translating">Traduzindo…</string>
     <string name="translate_translated_from">Traduzido do %s</string>
 
+    <!-- Loading -->
+    <string name="loading_searching_profile">Procurando seu perfil…</string>
+    <string name="loading_finding_friends">Encontrando seus amigos…</string>
+    <string name="loading_finding_friends_progress">Encontrando seus amigos… %d/%d</string>
+    <string name="loading_discovering_network">Descobrindo rede estendida… %d/%d</string>
+    <string name="loading_expanding_relays">Conectando a %d relays estendidos…</string>
+    <string name="loading_subscribing">Inscrevendo no feed…</string>
+    <string name="loading_notes">Carregando notas…</string>
+    <string name="loading_connecting_relays">Conectando aos relays…</string>
+    <string name="loading_finding_posts">Procurando publicações…</string>
+    <string name="loading_preparing_feed">Preparando seu feed…</string>
+
     <!-- Errors / Alerts -->
     <string name="error_social_graph_required">Grafo social necessário</string>
     <string name="error_extended_feed_description">O feed estendido mostra publicações de amigos-de-amigos. Você precisa calcular seu grafo social primeiro.</string>

@@ -115,13 +115,12 @@ fun LoadingScreen(
         (initLoadingState is InitLoadingState.Done && stickyPicture != null && cachedProfile != null)
 
     // Rotating status text for warm start
-    val warmMessages = remember { listOf("Connecting to relays...", "Finding posts...", "Preparing your feed...") }
     var warmMessageIndex by remember { mutableStateOf(0) }
     if (isWarmStart) {
         LaunchedEffect(Unit) {
             while (true) {
                 delay(2000)
-                warmMessageIndex = (warmMessageIndex + 1) % warmMessages.size
+                warmMessageIndex = (warmMessageIndex + 1) % 3
             }
         }
     }
@@ -181,12 +180,17 @@ fun LoadingScreen(
                 if (isWarmStart) {
                     // Warm start: no progress bar, just rotating status text
                     AnimatedContent(
-                        targetState = warmMessages[warmMessageIndex],
+                        targetState = warmMessageIndex,
                         transitionSpec = { fadeIn() togetherWith fadeOut() },
                         label = "warm-status"
-                    ) { text ->
+                    ) { index ->
+                        val warmMessage = when (index) {
+                            0 -> stringResource(R.string.loading_connecting_relays)
+                            1 -> stringResource(R.string.loading_finding_posts)
+                            else -> stringResource(R.string.loading_preparing_feed)
+                        }
                         Text(
-                            text = text,
+                            text = warmMessage,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center

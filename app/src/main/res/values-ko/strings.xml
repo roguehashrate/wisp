@@ -412,6 +412,18 @@
     <string name="translate_translating">번역 중…</string>
     <string name="translate_translated_from">%s에서 번역됨</string>
 
+    <!-- Loading -->
+    <string name="loading_searching_profile">프로필 검색 중…</string>
+    <string name="loading_finding_friends">친구 찾는 중…</string>
+    <string name="loading_finding_friends_progress">친구 찾는 중… %d/%d</string>
+    <string name="loading_discovering_network">확장 네트워크 검색 중… %d/%d</string>
+    <string name="loading_expanding_relays">%d개의 확장 릴레이에 연결 중…</string>
+    <string name="loading_subscribing">피드 구독 중…</string>
+    <string name="loading_notes">노트 로딩 중…</string>
+    <string name="loading_connecting_relays">릴레이에 연결 중…</string>
+    <string name="loading_finding_posts">게시물 찾는 중…</string>
+    <string name="loading_preparing_feed">피드 준비 중…</string>
+
     <!-- Errors / Alerts -->
     <string name="error_social_graph_required">소셜 그래프 필요</string>
     <string name="error_extended_feed_description">확장 피드는 친구의 친구의 게시물을 보여줍니다. 먼저 소셜 그래프를 계산해야 합니다.</string>
