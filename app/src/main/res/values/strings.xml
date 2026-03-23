@@ -339,6 +339,12 @@
 
     <!-- Console Screen -->
     <string name="console_no_errors">No errors logged</string>
+
+    <!-- Poll -->
+    <string name="poll_option">Option %d</string>
+    <string name="poll_add_option">+ Add option</string>
+    <string name="poll_single_choice">Single choice</string>
+    <string name="poll_multiple_choice">Multiple choice</string>
     <string name="social_compute_now">Compute Now</string>
     <string name="social_fetching_follows">Fetching follow lists...</string>
     <string name="social_building_graph">Building graph...</string>

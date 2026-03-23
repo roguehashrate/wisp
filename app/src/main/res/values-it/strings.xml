@@ -351,6 +351,12 @@
 
     <!-- Console Screen -->
     <string name="console_no_errors">Nessun errore registrato</string>
+
+    <!-- Poll -->
+    <string name="poll_option">Opzione %d</string>
+    <string name="poll_add_option">+ Aggiungi opzione</string>
+    <string name="poll_single_choice">Scelta singola</string>
+    <string name="poll_multiple_choice">Scelta multipla</string>
     <string name="social_compute_now">Calcola Ora</string>
     <string name="social_fetching_follows">Recupero liste following...</string>
     <string name="social_building_graph">Costruzione grafo...</string>
