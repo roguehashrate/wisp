@@ -527,7 +527,7 @@ fun ComposeScreen(
                                 OutlinedTextField(
                                     value = option,
                                     onValueChange = { viewModel.updatePollOption(index, it) },
-                                    label = { Text("Option ${index + 1}") },
+                                    label = { Text(stringResource(R.string.poll_option, index + 1)) },
                                     singleLine = true,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -552,7 +552,7 @@ fun ComposeScreen(
                         ) {
                             if (pollOptions.size < 10) {
                                 TextButton(onClick = { viewModel.addPollOption() }) {
-                                    Text("+ Add option")
+                                    Text(stringResource(R.string.poll_add_option))
                                 }
                             }
                             Spacer(Modifier.weight(1f))
@@ -561,8 +561,8 @@ fun ComposeScreen(
                                 onClick = { viewModel.togglePollType() },
                                 label = {
                                     Text(
-                                        if (pollType == Nip88.PollType.SINGLECHOICE) "Single choice"
-                                        else "Multiple choice"
+                                        if (pollType == Nip88.PollType.SINGLECHOICE) stringResource(R.string.poll_single_choice)
+                                        else stringResource(R.string.poll_multiple_choice)
                                     )
                                 }
                             )

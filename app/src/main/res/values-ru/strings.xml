@@ -322,6 +322,12 @@
 
     <!-- Console Screen -->
     <string name="console_no_errors">Нет зарегистрированных ошибок</string>
+
+    <!-- Poll -->
+    <string name="poll_option">Вариант %d</string>
+    <string name="poll_add_option">+ Добавить вариант</string>
+    <string name="poll_single_choice">Один выбор</string>
+    <string name="poll_multiple_choice">Множественный выбор</string>
     <string name="social_compute_now">Вычислить сейчас</string>
     <string name="social_fetching_follows">Получение списков подписок...</string>
     <string name="social_building_graph">Построение графа...</string>

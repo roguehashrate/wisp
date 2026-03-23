@@ -339,6 +339,12 @@
 
     <!-- Console Screen -->
     <string name="console_no_errors">エラーログなし</string>
+
+    <!-- Poll -->
+    <string name="poll_option">オプション %d</string>
+    <string name="poll_add_option">+ オプションを追加</string>
+    <string name="poll_single_choice">単一選択</string>
+    <string name="poll_multiple_choice">複数選択</string>
     <string name="social_compute_now">今すぐ計算</string>
     <string name="social_fetching_follows">フォローリストを取得中...</string>
     <string name="social_building_graph">グラフを構築中...</string>

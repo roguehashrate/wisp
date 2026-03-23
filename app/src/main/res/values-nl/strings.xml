@@ -339,6 +339,12 @@
 
     <!-- Console Screen -->
     <string name="console_no_errors">Geen fouten gelogd</string>
+
+    <!-- Poll -->
+    <string name="poll_option">Optie %d</string>
+    <string name="poll_add_option">+ Optie toevoegen</string>
+    <string name="poll_single_choice">Enkele keuze</string>
+    <string name="poll_multiple_choice">Meerdere keuzes</string>
     <string name="social_compute_now">Nu Berekenen</string>
     <string name="social_fetching_follows">Ophalen van follow-lijsten...</string>
     <string name="social_building_graph">Graaf bouwen...</string>

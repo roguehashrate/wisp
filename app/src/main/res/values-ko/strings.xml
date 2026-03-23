@@ -339,6 +339,12 @@
 
     <!-- Console Screen -->
     <string name="console_no_errors">기록된 오류 없음</string>
+
+    <!-- Poll -->
+    <string name="poll_option">옵션 %d</string>
+    <string name="poll_add_option">+ 옵션 추가</string>
+    <string name="poll_single_choice">단일 선택</string>
+    <string name="poll_multiple_choice">다중 선택</string>
     <string name="social_compute_now">지금 계산</string>
     <string name="social_fetching_follows">팔로우 목록 가져오는 중...</string>
     <string name="social_building_graph">그래프 구축 중...</string>
