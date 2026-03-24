@@ -58,6 +58,7 @@ fun AuthScreen(
     isTorEnabled: Boolean = false,
     torStatus: TorStatus = TorStatus.DISABLED,
     onToggleTor: (Boolean) -> Unit = {},
+    showSignUp: Boolean = true,
     onAuthenticated: (isNewAccount: Boolean) -> Unit
 ) {
     val context = LocalContext.current
@@ -164,25 +165,29 @@ fun AuthScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                if (viewModel.signUp()) onAuthenticated(true)
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Sign Up")
+        if (showSignUp) {
+            Button(
+                onClick = {
+                    if (viewModel.signUp()) onAuthenticated(true)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Sign Up")
+            }
+
+            Spacer(Modifier.height(24.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = "Or log in with your key",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
+        } else {
+            Spacer(Modifier.height(12.dp))
         }
-
-        Spacer(Modifier.height(24.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = "Or log in with your key",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(12.dp))
 
         OutlinedTextField(
             value = nsecInput,

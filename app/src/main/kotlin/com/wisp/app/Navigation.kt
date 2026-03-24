@@ -54,6 +54,7 @@ import com.wisp.app.ui.component.ZapDialog
 import com.wisp.app.ui.component.AuthApprovalDialog
 import com.wisp.app.ui.screen.BlossomServersScreen
 import com.wisp.app.ui.screen.AuthScreen
+import com.wisp.app.ui.screen.SplashScreen
 import com.wisp.app.ui.screen.ComposeScreen
 import com.wisp.app.ui.screen.DmConversationScreen
 import com.wisp.app.ui.screen.DmListScreen
@@ -107,10 +108,12 @@ import com.wisp.app.viewmodel.SearchViewModel
 import com.wisp.app.viewmodel.HashtagFeedViewModel
 import com.wisp.app.viewmodel.OnboardingViewModel
 import com.wisp.app.viewmodel.PowStatus
+import com.wisp.app.viewmodel.SplashViewModel
 import com.wisp.app.viewmodel.WalletViewModel
 import kotlinx.coroutines.launch
 
 object Routes {
+    const val SPLASH = "splash"
     const val AUTH = "auth"
     const val FEED = "feed"
     const val COMPOSE = "compose"
@@ -188,6 +191,7 @@ fun WispNavHost(
     val consoleViewModel: ConsoleViewModel = viewModel()
     val relayHealthViewModel: RelayHealthViewModel = viewModel()
     val onboardingViewModel: OnboardingViewModel = viewModel()
+    val splashViewModel: SplashViewModel = viewModel()
 
     relayViewModel.relayPool = feedViewModel.relayPool
 
@@ -313,7 +317,7 @@ fun WispNavHost(
 
     val startDestination = rememberSaveable {
         when {
-            !authViewModel.isLoggedIn -> Routes.AUTH
+            !authViewModel.isLoggedIn -> Routes.SPLASH
             !authViewModel.keyRepo.isOnboardingComplete() -> Routes.ONBOARDING_PROFILE
             else -> Routes.LOADING
         }
@@ -392,7 +396,7 @@ fun WispNavHost(
         if (!authViewModel.isLoggedIn) return@LaunchedEffect
         val currentDest = navController.currentDestination?.route
         // Only navigate directly if we're past the loading/auth screens
-        if (currentDest != null && currentDest !in setOf(Routes.LOADING, Routes.AUTH, Routes.ONBOARDING_PROFILE)) {
+        if (currentDest != null && currentDest !in setOf(Routes.LOADING, Routes.AUTH, Routes.SPLASH, Routes.ONBOARDING_PROFILE)) {
             onDeepLinkConsumed()
             navController.navigate(route)
         }
@@ -401,7 +405,7 @@ fun WispNavHost(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val nonAppRoutes = setOf(Routes.AUTH, Routes.LOADING, Routes.ONBOARDING_PROFILE, Routes.ONBOARDING_SUGGESTIONS, Routes.EXISTING_USER_ONBOARDING)
+    val nonAppRoutes = setOf(Routes.SPLASH, Routes.AUTH, Routes.LOADING, Routes.ONBOARDING_PROFILE, Routes.ONBOARDING_SUGGESTIONS, Routes.EXISTING_USER_ONBOARDING)
     val hideBottomBarRoutes = nonAppRoutes + Routes.DM_CONVERSATION
     val socialGraphDiscoveryState by feedViewModel.extendedNetworkRepo.discoveryState.collectAsState()
     val socialGraphComputing = currentRoute == Routes.SOCIAL_GRAPH && (
@@ -607,12 +611,32 @@ fun WispNavHost(
         navController = navController,
         startDestination = startDestination
     ) {
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                viewModel = splashViewModel,
+                isTorEnabled = isTorEnabled,
+                torStatus = torStatus,
+                onToggleTor = onToggleTor,
+                onSignUp = {
+                    if (authViewModel.signUp()) {
+                        navController.navigate(Routes.ONBOARDING_PROFILE) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    }
+                },
+                onLogIn = {
+                    navController.navigate(Routes.AUTH)
+                }
+            )
+        }
+
         composable(Routes.AUTH) {
             AuthScreen(
                 viewModel = authViewModel,
                 isTorEnabled = isTorEnabled,
                 torStatus = torStatus,
                 onToggleTor = onToggleTor,
+                showSignUp = false,
                 onAuthenticated = { isNewAccount ->
                     val wasAddingAccount = authViewModel.isAddingAccount
                     authViewModel.isAddingAccount = false
