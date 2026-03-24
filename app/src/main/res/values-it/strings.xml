@@ -42,6 +42,15 @@
     <string name="title_list">Lista</string>
     <string name="title_community">Comunità</string>
 
+    <!-- Splash Screen -->
+    <string name="splash_create_account">Crea account</string>
+    <string name="splash_log_in">Accedi</string>
+    <string name="splash_connecting_tor">Connessione a Tor…</string>
+    <string name="splash_connected_tor">Connesso via Tor</string>
+    <string name="splash_tor_error">Errore Tor</string>
+    <string name="splash_connect_tor">Connetti via Tor</string>
+    <string name="splash_people_online">%d persone online</string>
+
     <!-- Auth Screen -->
     <string name="auth_sign_up">Registrati</string>
     <string name="auth_log_in">Accedi</string>
