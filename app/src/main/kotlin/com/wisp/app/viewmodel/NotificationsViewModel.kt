@@ -4,8 +4,10 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.wisp.app.nostr.FlatNotificationItem
 import com.wisp.app.nostr.NotificationGroup
 import com.wisp.app.nostr.NotificationSummary
+import com.wisp.app.nostr.NotificationType
 import com.wisp.app.nostr.ProfileData
 import com.wisp.app.repo.ContactRepository
 import com.wisp.app.repo.EventRepository
@@ -22,6 +24,7 @@ import com.wisp.app.R
 
 enum class NotificationFilter(val labelResId: Int) {
     ALL(R.string.filter_all),
+    ZEN(R.string.filter_zen),
     REPLIES(R.string.filter_replies),
     REACTIONS(R.string.filter_reactions),
     ZAPS(R.string.filter_zaps),
@@ -39,6 +42,9 @@ class NotificationsViewModel(app: Application) : AndroidViewModel(app) {
 
     val notifications: StateFlow<List<NotificationGroup>>
         get() = notifRepo?.notifications ?: MutableStateFlow(emptyList())
+
+    val flatNotifications: StateFlow<List<FlatNotificationItem>>
+        get() = notifRepo?.flatNotifications ?: MutableStateFlow(emptyList())
 
     val hasUnread: StateFlow<Boolean>
         get() = notifRepo?.hasUnread ?: MutableStateFlow(false)
@@ -70,6 +76,9 @@ class NotificationsViewModel(app: Application) : AndroidViewModel(app) {
     private val _filteredNotifications = MutableStateFlow<List<NotificationGroup>>(emptyList())
     val filteredNotifications: StateFlow<List<NotificationGroup>> = _filteredNotifications
 
+    private val _filteredFlatNotifications = MutableStateFlow<List<FlatNotificationItem>>(emptyList())
+    val filteredFlatNotifications: StateFlow<List<FlatNotificationItem>> = _filteredFlatNotifications
+
     private var notifRepo: NotificationRepository? = null
     private var eventRepo: EventRepository? = null
     private var contactRepo: ContactRepository? = null
@@ -96,6 +105,7 @@ class NotificationsViewModel(app: Application) : AndroidViewModel(app) {
             combine(notifications, _filter) { notifs, filterType ->
                 when (filterType) {
                     NotificationFilter.ALL -> notifs
+                    NotificationFilter.ZEN -> emptyList()
                     NotificationFilter.REPLIES -> notifs.filterIsInstance<NotificationGroup.ReplyNotification>()
                     NotificationFilter.REACTIONS -> notifs.filterIsInstance<NotificationGroup.ReactionGroup>()
                     NotificationFilter.ZAPS -> notifs.filter {
@@ -111,6 +121,20 @@ class NotificationsViewModel(app: Application) : AndroidViewModel(app) {
                     }
                 }
             }.collect { _filteredNotifications.value = it }
+        }
+
+        viewModelScope.launch {
+            combine(flatNotifications, _filter) { notifs, filterType ->
+                when (filterType) {
+                    NotificationFilter.ALL -> emptyList()
+                    NotificationFilter.ZEN -> notifs
+                    NotificationFilter.REPLIES -> notifs.filter { it.type == NotificationType.REPLY }
+                    NotificationFilter.REACTIONS -> notifs.filter { it.type == NotificationType.REACTION || it.type == NotificationType.ZAP }
+                    NotificationFilter.ZAPS -> notifs.filter { it.type == NotificationType.ZAP }
+                    NotificationFilter.REPOSTS -> notifs.filter { it.type == NotificationType.REPOST }
+                    NotificationFilter.MENTIONS -> notifs.filter { it.type == NotificationType.MENTION || it.type == NotificationType.QUOTE }
+                }
+            }.collect { _filteredFlatNotifications.value = it }
         }
     }
 

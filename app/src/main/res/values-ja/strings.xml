@@ -251,6 +251,7 @@
     <string name="cd_sent_with">で送信</string>
     <string name="cd_filter_notifications">通知をフィルター</string>
     <string name="filter_all">すべて</string>
+    <string name="filter_zen">禅</string>
     <string name="filter_replies">返信</string>
     <string name="filter_reactions">リアクション</string>
     <string name="filter_zaps">サップ</string>

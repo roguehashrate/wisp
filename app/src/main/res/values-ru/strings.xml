@@ -232,6 +232,7 @@
     <string name="cd_active">Активный</string>
     <string name="cd_filter_notifications">Фильтровать уведомления</string>
     <string name="filter_all">Все</string>
+    <string name="filter_zen">Дзен</string>
     <string name="cd_seen_on">Видно на</string>
     <string name="cd_sent_with">Отправлено через</string>
     <string name="filter_replies">Ответы</string>

@@ -251,6 +251,7 @@
     <string name="cd_sent_with">Enviado com</string>
     <string name="cd_filter_notifications">Filtrar notificações</string>
     <string name="filter_all">Tudo</string>
+    <string name="filter_zen">Zen</string>
     <string name="filter_replies">Respostas</string>
     <string name="filter_reactions">Reações</string>
     <string name="filter_zaps">Zaps</string>

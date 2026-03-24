@@ -251,6 +251,7 @@
     <string name="cd_sent_with">发送于</string>
     <string name="cd_filter_notifications">筛选通知</string>
     <string name="filter_all">全部</string>
+    <string name="filter_zen">禅</string>
     <string name="filter_replies">回复</string>
     <string name="filter_reactions">反应</string>
     <string name="filter_zaps">闪电支付</string>

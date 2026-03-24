@@ -251,6 +251,7 @@
     <string name="cd_sent_with">Verzonden met</string>
     <string name="cd_filter_notifications">Meldingen Filteren</string>
     <string name="filter_all">Alles</string>
+    <string name="filter_zen">Zen</string>
     <string name="filter_replies">Antwoorden</string>
     <string name="filter_reactions">Reacties</string>
     <string name="filter_zaps">Zaps</string>
