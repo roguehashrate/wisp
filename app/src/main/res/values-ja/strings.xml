@@ -11,8 +11,20 @@
     <string name="drawer_my_profile">マイプロフィール</string>
     <string name="drawer_feeds">フィード</string>
     <string name="drawer_lists">リスト</string>
-    <string name="drawer_drafts">下書き</string>
+    <string name="drawer_drafts">下書き &amp; 予約済み</string>
     <string name="drawer_settings">設定</string>
+
+    <!-- Drafts & Scheduled -->
+    <string name="drafts_scheduled_title">下書き &amp; 予約済み</string>
+    <string name="drafts_tab">下書き</string>
+    <string name="scheduled_tab">予約済み</string>
+    <string name="no_drafts_saved">保存された下書きはありません</string>
+    <string name="no_scheduled_posts">予約された投稿はありません</string>
+    <string name="draft_label">下書き</string>
+    <string name="reply_label">返信</string>
+    <string name="delete_draft">下書きを削除</string>
+    <string name="empty_content">（空）</string>
+    <string name="remove_from_schedule">予約を解除</string>
     <string name="drawer_interface">インターフェース</string>
     <string name="drawer_relays">リレー</string>
     <string name="drawer_media_servers">メディアサーバー</string>
@@ -81,6 +93,7 @@
     <string name="compose_mining">マイニング中…</string>
     <string name="compose_post_now">今すぐ投稿 (%d)</string>
     <string name="compose_replying_to">に返信 </string>
+    <string name="content_marked_nsfw">NSFW 指定</string>
     <string name="btn_post_now">今すぐ投稿</string>
     <string name="btn_cancel">キャンセル</string>
     <string name="btn_save">保存</string>
@@ -198,6 +211,12 @@
     <string name="tab_list">リスト</string>
     <string name="tab_hashtags">ハッシュタグ</string>
     <string name="tab_feed">フィード</string>
+    <string name="interests">関心</string>
+    <string name="tab_feed">フィード</string>
+    <string name="loading_interest_sets">関心セットを読み込み中…</string>
+    <string name="no_interest_sets">関心セットがありません。下記で作成するか、フィードページからハッシュタグをフォローしてください。</string>
+    <string name="no_hashtags_yet">ハッシュタグなし</string>
+    <string name="delete_set">セットを削除</string>
     <string name="tab_muted_words">ミュート単語</string>
     <string name="tab_muted_users">ミュートユーザー</string>
     <string name="tab_replies">返信</string>
@@ -209,6 +228,16 @@
     <string name="tab_pinned">ピン留め</string>
     <string name="tab_new_set">新しいセット</string>
     <string name="tab_all_relays">すべてのリレー</string>
+    <string name="btn_new_set">+ 新しいセット</string>
+    <string name="tab_all_relays">すべてのリレー</string>
+    <string name="tab_favorites">お気に入り</string>
+    <string name="tab_relay_sets">リレースキーマ</string>
+    <string name="tab_combined_feed">統合フィード</string>
+    <string name="relay_count_format">%d件のリレー</string>
+    <string name="relay_covers_format">%dをカバー</string>
+    <string name="error_no_relay_scores">リレースコアがありません</string>
+    <string name="btn_add_to_set">+セット</string>
+    <string name="btn_details">詳細</string>
 
     <!-- Content Descriptions -->
     <string name="cd_back">戻る</string>
@@ -271,6 +300,88 @@
     <string name="cd_add_new">新規追加</string>
     <string name="cd_create_emoji_set">絵文字セットを作成</string>
     <string name="cd_upload_image">画像をアップロード</string>
+
+    <!-- Custom Emoji Screen -->
+    <string name="emoji_quick_reactions">クイックリアクション</string>
+    <string name="emoji_quick_reactions_description">リアクション選択に表示されるUnicode絵文字</string>
+    <string name="emoji_custom_image_emojis">カスタム画像絵文字</string>
+    <string name="emoji_custom_image_description">絵文字リストからの画像絵文字 (kind 10030)</string>
+    <string name="emoji_available_custom">利用可能なカスタム絵文字</string>
+    <string name="emoji_available_description">リアクション選択ですべて利用可能なカスタム絵文字</string>
+    <string name="emoji_manage">管理</string>
+    <string name="emoji_remove">削除</string>
+    <string name="emoji_save_removed">保存（%d件削除）</string>
+    <string name="emoji_my_sets">マイ絵文字セット</string>
+    <string name="emoji_no_sets_yet">絵文字セットがありません。+をタップして作成してください。</string>
+    <string name="emoji_add_custom">カスタム絵文字を追加</string>
+    <string name="emoji_shortcode">ショートコード</string>
+    <string name="emoji_count_format">%d件の絵文字</string>
+    <string name="emoji_library_title">絵文字ライブラリ</string>
+    <string name="emoji_add_from_keyboard">キーボードから追加</string>
+    <string name="emoji_add_from_keyboard_hint">絵文字を入力または貼り付け</string>
+    <string name="emoji_dialog_add">追加</string>
+    <string name="emoji_dialog_cancel">キャンセル</string>
+    <string name="emoji_done_format">完了 (%d)</string>
+
+    <!-- Blossom/Media Servers Screen -->
+    <string name="blossom_title">メディアサーバー</string>
+    <string name="blossom_broadcast">サーバー一覧をブロードキャスト</string>
+    <string name="blossom_broadcast_sent">ブロードキャスト送信済み</string>
+    <string name="blossom_drag_reorder">ドラッグして優先度を並べ替え</string>
+
+    <!-- PoW Screen -->
+    <string name="pow_description">Proof of Workはイベントにハッシュプレフィックスをマイニングし、スパム抑止剤として機能します。難易度が高いほど時間かかりますが、より多くの努力を示します。</string>
+    <string name="pow_notes">ノート</string>
+    <string name="pow_enable_notes">ノートにPoWを有効化</string>
+    <string name="pow_notes_subtitle">ノート公開前にProof of Workをマイニング</string>
+    <string name="pow_notes_difficulty">ノートの難易度</string>
+    <string name="pow_reactions">リアクション</string>
+    <string name="pow_enable_reactions">リアクションにPoWを有効化</string>
+    <string name="pow_reactions_subtitle">リアクションでProof of Workをマイニング（低難易度では1秒未満）</string>
+    <string name="pow_reactions_difficulty">リアクションの難易度</string>
+    <string name="pow_dms">ダイレクトメッセージ</string>
+    <string name="pow_enable_dms">DMにPoWを有効化</string>
+    <string name="pow_dms_subtitle">DM送信前にGift WrapsでProof of Workをマイニング</string>
+    <string name="pow_dms_difficulty">DMの難易度</string>
+    <string name="pow_bits_format">%d bits</string>
+
+    <!-- Social Graph Screen -->
+    <string name="social_not_computed">ソーシャルグラフはまだ計算されていません。</string>
+
+    <!-- Console Screen -->
+    <string name="console_no_errors">エラーログなし</string>
+
+    <!-- Poll -->
+    <string name="poll_option">オプション %d</string>
+    <string name="poll_add_option">+ オプションを追加</string>
+    <string name="poll_single_choice">単一選択</string>
+    <string name="poll_multiple_choice">複数選択</string>
+    <string name="social_compute_now">今すぐ計算</string>
+    <string name="social_fetching_follows">フォローリストを取得中...</string>
+    <string name="social_building_graph">グラフを構築中...</string>
+    <string name="social_computing_network">ネットワークを計算中...</string>
+    <string name="social_filtering">フィルター中...</string>
+    <string name="social_fetching_relays">リレーリストを取得中...</string>
+    <string name="social_warning">2\u20135分かかる場合があります。完了するまでこの画面にとどまってください。</string>
+    <string name="social_top_accounts">トップアカウント</string>
+    <string name="social_qualified_from">%2$d人のフォローから%1$d人が適合</string>
+    <string name="social_recompute">再計算</string>
+    <string name="social_view_profile">プロフィールを見る</string>
+    <string name="social_followed_by">%d人にフォローされている</string>
+    <string name="social_followed_by_yours">あなたのフォロワー%d人にフォローされている</string>
+    <string name="social_complete">計算完了</string>
+    <string name="social_done">完了</string>
+    <string name="social_failed">検出に失敗しました</string>
+    <string name="social_retry">再試行</string>
+    <string name="social_stat_follows">フォロー</string>
+    <string name="social_stat_2nd_degree">2次 degree</string>
+    <string name="social_stat_qualified">適格</string>
+    <string name="social_stat_relays">リレー</string>
+    <string name="social_stat_follows_1st">フォロー(1次)</string>
+    <string name="social_stat_2nd_users">2次ユーザー</string>
+    <string name="social_stat_qualified_thresh">適格(しきい値)</string>
+    <string name="social_stat_relays_covered">カバーされたリレー</string>
+
     <string name="cd_preview">プレビュー</string>
     <string name="cd_check_relay_backups">リレーバックアップを確認</string>
     <string name="cd_copy_address">アドレスをコピー</string>
@@ -408,6 +519,9 @@
     <string name="loading_expanding_relays">%d個拡張リレーに接続中…</string>
     <string name="loading_subscribing">フィードを購読中…</string>
     <string name="loading_notes">ノートを読み込み中…</string>
+    <string name="loading_connecting_relays">リレーに接続中…</string>
+    <string name="loading_finding_posts">投稿を検索中…</string>
+    <string name="loading_preparing_feed">フィードを準備中…</string>
     <string name="error_list_not_found">リストが見つかりません</string>
     <string name="error_no_list_members">このリストにはメンバーがいません</string>
 
@@ -441,4 +555,92 @@
 
     <!-- Time -->
     <string name="time_24h">24時間</string>
+
+    <!-- Profile -->
+    <string name="profile_tab_notes">ノート</string>
+    <string name="profile_tab_replies">返信</string>
+    <string name="profile_tab_media">メディア</string>
+    <string name="profile_tab_following">フォロー中</string>
+    <string name="profile_tab_followers">フォロワー</string>
+    <string name="profile_tab_relays">リレー</string>
+    <string name="profile_sort_recent">最近</string>
+    <string name="profile_sort_likes">いいね</string>
+    <string name="profile_sort_reposts">リポスト</string>
+    <string name="profile_sort_zaps">サップ</string>
+    <string name="profile_sort_replies">返信</string>
+    <string name="profile_edit">プロフィール編集</string>
+    <string name="profile_follows_you">フォローされています</string>
+    <string name="profile_copy_json">プロフィールJSONをコピー</string>
+    <string name="profile_add_to_list">リストに追加</string>
+    <string name="profile_block">ブロック</string>
+    <string name="profile_unblock">ブロック解除</string>
+    <string name="profile_no_notes">ノートはまだありません</string>
+    <string name="profile_no_replies">返信はまだありません</string>
+    <string name="profile_no_media">メディアはまだありません</string>
+    <string name="profile_not_following">誰もフォローしていません</string>
+    <string name="profile_no_followers">フォロワーが見つかりません</string>
+    <string name="profile_no_relays">リレーリストが公开发信されていません</string>
+    <string name="profile_relay_list">リレーリスト（NIP-65）</string>
+    <string name="profile_discovered_relays">発見されたリレー</string>
+    <string name="profile_other_discovered_relays">その他の発見されたリレー</string>
+    <string name="profile_pinned">固定</string>
+    <string name="profile_json_copied">プロフィールJSONがコピーされました</string>
+    <string name="profile_send_message">メッセージを送る</string>
+    <string name="profile_search_notes">ノートを検索</string>
+    <string name="profile_crawling_still">まだクローリング中またはアカウントが新しすぎます</string>
+    <string name="profile_crawling_no_results">まだランキング結果がありません。後でもう一度確認してください。</string>
+
+    <!-- Wallet -->
+    <string name="wallet_connect_wallet">ウォレットを接続</string>
+    <string name="wallet_choose_how">サットを送受信するためのLightningウォレットの接続方法を選択してください。</string>
+    <string name="wallet_create_new">新規ウォレットを作成</string>
+    <string name="wallet_create_description">Wispで直接新しいウォレットを作成、資金はSparkプロバイダーが保護</string>
+    <string name="wallet_nwc">Nostr Wallet Connect</string>
+    <string name="wallet_nwc_description">NWC接続文字列を使用して外部Lightningウォレットを接続。</string>
+    <string name="wallet_connect_lightning">サットを送受信するためのLightningウォレットを接続。ウォレットプロバイダーからNWC接続文字列を貼り付け。</string>
+    <string name="wallet_recommended">推奨ウォレット</string>
+    <string name="wallet_nwc_connection_string">NWC接続文字列</string>
+    <string name="wallet_connecting">接続中…</string>
+    <string name="wallet_connect">接続</string>
+    <string name="wallet_spark">Sparkウォレット</string>
+    <string name="wallet_tap_to_reveal">タップして表示</string>
+    <string name="wallet_set_up_lightning">Lightningアドレスを設定</string>
+    <string name="wallet_get_username">ユーザー名@breez.tipsアドレスを取得</string>
+    <string name="wallet_send">送る</string>
+    <string name="wallet_receive">受け取る</string>
+    <string name="wallet_lightning_address_invoice">Lightningアドレスまたはインボイス</string>
+    <string name="wallet_paste">貼り付け</string>
+    <string name="wallet_scan_qr">QRスキャン</string>
+    <string name="wallet_gallery">ギャラリー</string>
+    <string name="wallet_next">次へ</string>
+    <string name="wallet_scan_qr_code">QRコードスキャン</string>
+    <string name="wallet_camera_permission">カメラの許可が必要</string>
+    <string name="wallet_grant_permission">許可を与える</string>
+    <string name="wallet_point_camera">LightningインボイスまたはアドレスのQRコードにカメラを向けてください</string>
+    <string name="wallet_send_to">送る先</string>
+    <string name="wallet_resolving">解決中…</string>
+    <string name="wallet_confirm_payment">支払いを確認</string>
+    <string name="wallet_sats">サット</string>
+    <string name="wallet_fees">手数料</string>
+    <string name="wallet_total_spent">合計支出</string>
+    <string name="wallet_pay">支払う</string>
+    <string name="wallet_sending_payment">支払い送信中…</string>
+    <string name="wallet_payment_received">支払いを受け取りました</string>
+    <string name="wallet_transactions">取引</string>
+    <string name="wallet_no_transactions">まだ取引がありません</string>
+    <string name="wallet_load_more">もっと読み込む</string>
+    <string name="wallet_received">受け取り</string>
+    <string name="wallet_sent">送り</string>
+    <string name="wallet_fee">手数料: %,d サット</string>
+    <string name="wallet_spark_sdk">SDK v%s</string>
+    <string name="wallet_not_supported">お使いのウォレットではサポートされていません</string>
+    <string name="wallet_creating_invoice">インボイス作成中…</string>
+
+    <!-- Diagnostics -->
+    <string name="diagnostics_title">診断</string>
+    <string name="diagnostic_mode">診断モード</string>
+    <string name="diagnostic_mode_description">イベント処理の決定をファイルにログしてデバッグする</string>
+    <string name="share_logs">ログを共有</string>
+    <string name="share_diagnostic_logs">診断ログを共有</string>
+    <string name="clear_logs">ログをクリア</string>
 </resources>

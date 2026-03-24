@@ -11,8 +11,20 @@
     <string name="drawer_my_profile">내 프로필</string>
     <string name="drawer_feeds">피드</string>
     <string name="drawer_lists">리스트</string>
-    <string name="drawer_drafts">임시 저장</string>
+    <string name="drawer_drafts">임시 저장 &amp; 예약됨</string>
     <string name="drawer_settings">설정</string>
+
+    <!-- Drafts & Scheduled -->
+    <string name="drafts_scheduled_title">임시 저장 &amp; 예약됨</string>
+    <string name="drafts_tab">임시 저장</string>
+    <string name="scheduled_tab">예약됨</string>
+    <string name="no_drafts_saved">저장된 임시 저장글이 없습니다</string>
+    <string name="no_scheduled_posts">예약된 게시물이 없습니다</string>
+    <string name="draft_label">임시 저장</string>
+    <string name="reply_label">답글</string>
+    <string name="delete_draft">임시 저장글 삭제</string>
+    <string name="empty_content">(비어 있음)</string>
+    <string name="remove_from_schedule">예약 취소</string>
     <string name="drawer_interface">인터페이스</string>
     <string name="drawer_relays">릴레이</string>
     <string name="drawer_media_servers">미디어 서버</string>
@@ -81,6 +93,7 @@
     <string name="compose_mining">채굴 중…</string>
     <string name="compose_post_now">지금 게시 (%d)</string>
     <string name="compose_replying_to">답글 달기 </string>
+    <string name="content_marked_nsfw">NSFW 표시됨</string>
     <string name="btn_post_now">지금 게시</string>
     <string name="btn_cancel">취소</string>
     <string name="btn_save">저장</string>
@@ -198,6 +211,12 @@
     <string name="tab_list">리스트</string>
     <string name="tab_hashtags">해시태그</string>
     <string name="tab_feed">피드</string>
+    <string name="interests">관심사</string>
+    <string name="tab_feed">피드</string>
+    <string name="loading_interest_sets">관심사 세트 로딩 중…</string>
+    <string name="no_interest_sets">아직 관심사 세트가 없습니다. 아래에서 만들거나 피드 페이지에서 해시태그를 팔로우하세요.</string>
+    <string name="no_hashtags_yet">아직 해시태그 없음</string>
+    <string name="delete_set">세트 삭제</string>
     <string name="tab_muted_words">음소거 단어</string>
     <string name="tab_muted_users">음소거 사용자</string>
     <string name="tab_replies">답글</string>
@@ -209,6 +228,16 @@
     <string name="tab_pinned">고정됨</string>
     <string name="tab_new_set">새 세트</string>
     <string name="tab_all_relays">전체 릴레이</string>
+    <string name="btn_new_set">+ 새 세트</string>
+    <string name="tab_all_relays">전체 릴레이</string>
+    <string name="tab_favorites">즐겨찾기</string>
+    <string name="tab_relay_sets">릴레이 세트</string>
+    <string name="tab_combined_feed">통합 피드</string>
+    <string name="relay_count_format">%d개 릴레이</string>
+    <string name="relay_covers_format">%d 커버</string>
+    <string name="error_no_relay_scores">사용 가능한 릴레이 점수 없음</string>
+    <string name="btn_add_to_set">+세트</string>
+    <string name="btn_details">상세</string>
 
     <!-- Content Descriptions -->
     <string name="cd_back">뒤로</string>
@@ -271,6 +300,88 @@
     <string name="cd_add_new">새로 추가</string>
     <string name="cd_create_emoji_set">이모지 세트 만들기</string>
     <string name="cd_upload_image">이미지 업로드</string>
+
+    <!-- Custom Emoji Screen -->
+    <string name="emoji_quick_reactions">빠른 반응</string>
+    <string name="emoji_quick_reactions_description">반응 선택기에 표시되는 유니코드 이모지</string>
+    <string name="emoji_custom_image_emojis">커스텀 이미지 이모지</string>
+    <string name="emoji_custom_image_description">이모지 목록의 이미지 이모지 (kind 10030)</string>
+    <string name="emoji_available_custom">사용 가능한 커스텀 이모지</string>
+    <string name="emoji_available_description">반응 선택기에서 사용할 수 있는 모든 커스텀 이모지</string>
+    <string name="emoji_manage">관리</string>
+    <string name="emoji_remove">제거</string>
+    <string name="emoji_save_removed">저장 (%d개 제거됨)</string>
+    <string name="emoji_my_sets">내 이모지 세트</string>
+    <string name="emoji_no_sets_yet">아직 이모지 세트가 없습니다. +를 눌러 생성하세요.</string>
+    <string name="emoji_add_custom">커스텀 이모지 추가</string>
+    <string name="emoji_shortcode">쇼트코드</string>
+    <string name="emoji_count_format">%d개의 이모지</string>
+    <string name="emoji_library_title">이모지 라이브러리</string>
+    <string name="emoji_add_from_keyboard">키보드에서 추가</string>
+    <string name="emoji_add_from_keyboard_hint">이모지를 입력하거나 붙여넣기</string>
+    <string name="emoji_dialog_add">추가</string>
+    <string name="emoji_dialog_cancel">취소</string>
+    <string name="emoji_done_format">완료 (%d)</string>
+
+    <!-- Blossom/Media Servers Screen -->
+    <string name="blossom_title">미디어 서버</string>
+    <string name="blossom_broadcast">서버 목록 브로드캐스트</string>
+    <string name="blossom_broadcast_sent">브로드캐스트 전송됨</string>
+    <string name="blossom_drag_reorder">드래그하여 우선순위 변경</string>
+
+    <!-- PoW Screen -->
+    <string name="pow_description">Proof of Work는 이벤트에 해시 접두사를 마이닝하여 스팸 방지 역할을 합니다. 난이도가 높을수록 오래 걸리지만 더 많은 노력을 의미합니다.</string>
+    <string name="pow_notes">노트</string>
+    <string name="pow_enable_notes">노트에 PoW 활성화</string>
+    <string name="pow_notes_subtitle">노트 게시 전에 Proof of Work 마이닝</string>
+    <string name="pow_notes_difficulty">노트 난이도</string>
+    <string name="pow_reactions">반응</string>
+    <string name="pow_enable_reactions">반응에 PoW 활성화</string>
+    <string name="pow_reactions_subtitle">반응에서 Proof of Work 마이닝 (낮은 난이도에서 1초 미만)</string>
+    <string name="pow_reactions_difficulty">반응 난이도</string>
+    <string name="pow_dms">다이렉트 메시지</string>
+    <string name="pow_enable_dms">DM에 PoW 활성화</string>
+    <string name="pow_dms_subtitle">DM 전송 전에 Gift Wraps에서 Proof of Work 마이닝</string>
+    <string name="pow_dms_difficulty">DM 난이도</string>
+    <string name="pow_bits_format">%d bits</string>
+
+    <!-- Social Graph Screen -->
+    <string name="social_not_computed">소셜 그래프가 아직 계산되지 않았습니다.</string>
+
+    <!-- Console Screen -->
+    <string name="console_no_errors">기록된 오류 없음</string>
+
+    <!-- Poll -->
+    <string name="poll_option">옵션 %d</string>
+    <string name="poll_add_option">+ 옵션 추가</string>
+    <string name="poll_single_choice">단일 선택</string>
+    <string name="poll_multiple_choice">다중 선택</string>
+    <string name="social_compute_now">지금 계산</string>
+    <string name="social_fetching_follows">팔로우 목록 가져오는 중...</string>
+    <string name="social_building_graph">그래프 구축 중...</string>
+    <string name="social_computing_network">네트워크 계산 중...</string>
+    <string name="social_filtering">필터링 중...</string>
+    <string name="social_fetching_relays">릴레이 목록 가져오는 중...</string>
+    <string name="social_warning">2\u20135분이 걸릴 수 있습니다. 완료될 때까지 이 화면을 유지하세요.</string>
+    <string name="social_top_accounts">상위 계정</string>
+    <string name="social_qualified_from">%2$d명의 팔로우 중 %1$d명 적합</string>
+    <string name="social_recompute">재계산</string>
+    <string name="social_view_profile">프로필 보기</string>
+    <string name="social_followed_by">%d명에게 팔로우됨</string>
+    <string name="social_followed_by_yours">당신의 팔로워 중 %d명에게 팔로우됨</string>
+    <string name="social_complete">계산 완료</string>
+    <string name="social_done">완료</string>
+    <string name="social_failed">검색 실패</string>
+    <string name="social_retry">재시도</string>
+    <string name="social_stat_follows">팔로우</string>
+    <string name="social_stat_2nd_degree">2차</string>
+    <string name="social_stat_qualified">적합</string>
+    <string name="social_stat_relays">릴레이</string>
+    <string name="social_stat_follows_1st">팔로우 (1차)</string>
+    <string name="social_stat_2nd_users">2차 사용자</string>
+    <string name="social_stat_qualified_thresh">적합 (임계값)</string>
+    <string name="social_stat_relays_covered">커버된 릴레이</string>
+
     <string name="cd_preview">미리보기</string>
     <string name="cd_check_relay_backups">릴레이 백업 확인</string>
     <string name="cd_copy_address">주소 복사</string>
@@ -389,6 +500,18 @@
     <string name="translate_translating">번역 중…</string>
     <string name="translate_translated_from">%s에서 번역됨</string>
 
+    <!-- Loading -->
+    <string name="loading_searching_profile">프로필 검색 중…</string>
+    <string name="loading_finding_friends">친구 찾는 중…</string>
+    <string name="loading_finding_friends_progress">친구 찾는 중… %d/%d</string>
+    <string name="loading_discovering_network">확장 네트워크 검색 중… %d/%d</string>
+    <string name="loading_expanding_relays">%d개의 확장 릴레이에 연결 중…</string>
+    <string name="loading_subscribing">피드 구독 중…</string>
+    <string name="loading_notes">노트 로딩 중…</string>
+    <string name="loading_connecting_relays">릴레이에 연결 중…</string>
+    <string name="loading_finding_posts">게시물 찾는 중…</string>
+    <string name="loading_preparing_feed">피드 준비 중…</string>
+
     <!-- Errors / Alerts -->
     <string name="error_social_graph_required">소셜 그래프 필요</string>
     <string name="error_extended_feed_description">확장 피드는 친구의 친구의 게시물을 보여줍니다. 먼저 소셜 그래프를 계산해야 합니다.</string>
@@ -432,4 +555,92 @@
 
     <!-- Time -->
     <string name="time_24h">24시간</string>
+
+    <!-- Profile -->
+    <string name="profile_tab_notes">노트</string>
+    <string name="profile_tab_replies">답글</string>
+    <string name="profile_tab_media">미디어</string>
+    <string name="profile_tab_following">팔로잉</string>
+    <string name="profile_tab_followers">팔로워</string>
+    <string name="profile_tab_relays">릴레이</string>
+    <string name="profile_sort_recent">최신</string>
+    <string name="profile_sort_likes">좋아요</string>
+    <string name="profile_sort_reposts">리포스트</string>
+    <string name="profile_sort_zaps">재핑</string>
+    <string name="profile_sort_replies">답글</string>
+    <string name="profile_edit">프로필 수정</string>
+    <string name="profile_follows_you">팔로우함</string>
+    <string name="profile_copy_json">프로필 JSON 복사</string>
+    <string name="profile_add_to_list">리스트에 추가</string>
+    <string name="profile_block">차단</string>
+    <string name="profile_unblock">차단 해제</string>
+    <string name="profile_no_notes">아직 노트가 없습니다</string>
+    <string name="profile_no_replies">아직 답글이 없습니다</string>
+    <string name="profile_no_media">아직 미디어가 없습니다</string>
+    <string name="profile_not_following">아무도 팔로우하지 않음</string>
+    <string name="profile_no_followers">팔로워를 찾을 수 없음</string>
+    <string name="profile_no_relays">게시된 릴레이 목록 없음</string>
+    <string name="profile_relay_list">릴레이 목록 (NIP-65)</string>
+    <string name="profile_discovered_relays">발견된 릴레이</string>
+    <string name="profile_other_discovered_relays">기타 발견된 릴레이</string>
+    <string name="profile_pinned">고정됨</string>
+    <string name="profile_json_copied">프로필 JSON이 복사됨</string>
+    <string name="profile_send_message">메시지 보내기</string>
+    <string name="profile_search_notes">노트 검색</string>
+    <string name="profile_crawling_still">아직 크롤링 중이거나 계정이 너무 새롭습니다</string>
+    <string name="profile_crawling_no_results">아직 순위 결과가 없습니다. 나중에 다시 확인하세요.</string>
+
+    <!-- Wallet -->
+    <string name="wallet_connect_wallet">지갑 연결</string>
+    <string name="wallet_choose_how">사트를 보내고 받기 위한 라이트닝 지갑 연결 방법을 선택하세요.</string>
+    <string name="wallet_create_new">새 지갑 만들기</string>
+    <string name="wallet_create_description">Wisp에서 직접 새 지갑 만들기,资金은 Spark 제공자가 보호</string>
+    <string name="wallet_nwc">Nostr Wallet Connect</string>
+    <string name="wallet_nwc_description">NWC 연결 문자열을 사용하여 외부 라이트닝 지갑을 연결합니다.</string>
+    <string name="wallet_connect_lightning">사트를 보내고 받기 위한 라이트닝 지갑을 연결하세요. 지갑 제공자의 NWC 연결 문자열을 붙여넣으세요.</string>
+    <string name="wallet_recommended">추천 지갑</string>
+    <string name="wallet_nwc_connection_string">NWC 연결 문자열</string>
+    <string name="wallet_connecting">연결 중…</string>
+    <string name="wallet_connect">연결</string>
+    <string name="wallet_spark">Spark 지갑</string>
+    <string name="wallet_tap_to_reveal">탭하여 표시</string>
+    <string name="wallet_set_up_lightning">라이트닝 주소 설정</string>
+    <string name="wallet_get_username">사용자@breez.tips 주소 받기</string>
+    <string name="wallet_send">보내기</string>
+    <string name="wallet_receive">받기</string>
+    <string name="wallet_lightning_address_invoice">라이트닝 주소 또는 인보이스</string>
+    <string name="wallet_paste">붙여넣기</string>
+    <string name="wallet_scan_qr">QR 스캔</string>
+    <string name="wallet_gallery">갤러리</string>
+    <string name="wallet_next">다음</string>
+    <string name="wallet_scan_qr_code">QR 코드 스캔</string>
+    <string name="wallet_camera_permission">카메라 권한 필요</string>
+    <string name="wallet_grant_permission">권한 부여</string>
+    <string name="wallet_point_camera">라이트닝 인보이스 또는 주소 QR 코드에 카메라를 겨누세요</string>
+    <string name="wallet_send_to">보내기 대상</string>
+    <string name="wallet_resolving">해석 중…</string>
+    <string name="wallet_confirm_payment">결제 확인</string>
+    <string name="wallet_sats">사트</string>
+    <string name="wallet_fees">수수료</string>
+    <string name="wallet_total_spent">총 지출</string>
+    <string name="wallet_pay">지불</string>
+    <string name="wallet_sending_payment">결제 전송 중…</string>
+    <string name="wallet_payment_received">결제 수령됨</string>
+    <string name="wallet_transactions">거래</string>
+    <string name="wallet_no_transactions">아직 거래 없음</string>
+    <string name="wallet_load_more">더 불러오기</string>
+    <string name="wallet_received">수령</string>
+    <string name="wallet_sent">전송</string>
+    <string name="wallet_fee">수수료: %,d 사트</string>
+    <string name="wallet_spark_sdk">SDK v%s</string>
+    <string name="wallet_not_supported">지갑에서 지원하지 않음</string>
+    <string name="wallet_creating_invoice">인보이스 생성 중…</string>
+
+    <!-- Diagnostics -->
+    <string name="diagnostics_title">진단</string>
+    <string name="diagnostic_mode">진단 모드</string>
+    <string name="diagnostic_mode_description">디버깅을 위해 이벤트 처리 결정을 파일에 기록</string>
+    <string name="share_logs">로그 공유</string>
+    <string name="share_diagnostic_logs">진단 로그 공유</string>
+    <string name="clear_logs">로그 지우기</string>
 </resources>

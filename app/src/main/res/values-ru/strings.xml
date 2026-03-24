@@ -8,8 +8,20 @@
     <string name="drawer_my_profile">Мой профиль</string>
     <string name="drawer_feeds">Ленты</string>
     <string name="drawer_lists">Списки</string>
-    <string name="drawer_drafts">Черновики</string>
+    <string name="drawer_drafts">Черновики &amp; Запланированные</string>
     <string name="drawer_settings">Настройки</string>
+
+    <!-- Drafts & Scheduled -->
+    <string name="drafts_scheduled_title">Черновики &amp; Запланированные</string>
+    <string name="drafts_tab">Черновики</string>
+    <string name="scheduled_tab">Запланированные</string>
+    <string name="no_drafts_saved">Нет сохранённых черновиков</string>
+    <string name="no_scheduled_posts">Нет запланированных постов</string>
+    <string name="draft_label">Черновик</string>
+    <string name="reply_label">Ответ</string>
+    <string name="delete_draft">Удалить черновик</string>
+    <string name="empty_content">(пусто)</string>
+    <string name="remove_from_schedule">Удалить из расписания</string>
     <string name="drawer_interface">Интерфейс</string>
     <string name="drawer_relays">Рилэи</string>
     <string name="drawer_media_servers">Медиа-серверы</string>
@@ -79,6 +91,7 @@
     <string name="compose_mining">Майнинг…</string>
     <string name="compose_post_now">Опубликовать (%d)</string>
     <string name="compose_replying_to">Ответ для </string>
+    <string name="content_marked_nsfw">Отмечено как NSFW</string>
     <string name="btn_close">Закрыть</string>
     <string name="btn_ok">ОК</string>
     <string name="btn_retry">Повторить</string>
@@ -183,6 +196,12 @@
     <string name="tab_list">Список</string>
     <string name="tab_hashtags">Хештеги</string>
     <string name="tab_feed">Лента</string>
+    <string name="interests">Интересы</string>
+    <string name="tab_feed">Лента</string>
+    <string name="loading_interest_sets">Загрузка наборов интересов…</string>
+    <string name="no_interest_sets">Пока нет наборов интересов. Создайте один ниже или подпишитесь на хештеги со страниц лент.</string>
+    <string name="no_hashtags_yet">Пока нет хештегов</string>
+    <string name="delete_set">Удалить набор</string>
     <string name="tab_muted_words">Заглушённые слова</string>
     <string name="tab_muted_users">Заглушённые пользователи</string>
     <string name="tab_replies">Ответы</string>
@@ -194,6 +213,16 @@
     <string name="tab_pinned">Закреплённые</string>
     <string name="tab_new_set">Новый набор</string>
     <string name="tab_all_relays">Все рилэи</string>
+    <string name="btn_new_set">+ Новый набор</string>
+    <string name="tab_all_relays">Все рилэи</string>
+    <string name="tab_favorites">Избранное</string>
+    <string name="tab_relay_sets">Наборы рилэев</string>
+    <string name="tab_combined_feed">Комбинированная лента</string>
+    <string name="relay_count_format">%d рилэев</string>
+    <string name="relay_covers_format">охват %d</string>
+    <string name="error_no_relay_scores">Рейтинги рилэев пока недоступны</string>
+    <string name="btn_add_to_set">+Набор</string>
+    <string name="btn_details">Подробнее</string>
     <string name="cd_back">Назад</string>
     <string name="cd_toggle_tor">Переключить Tor</string>
     <string name="cd_toggle_theme">Переключить тему</string>
@@ -254,6 +283,88 @@
     <string name="cd_add_new">Добавить новый</string>
     <string name="cd_create_emoji_set">Создать набор эмодзи</string>
     <string name="cd_upload_image">Загрузить изображение</string>
+
+    <!-- Custom Emoji Screen -->
+    <string name="emoji_quick_reactions">Быстрые реакции</string>
+    <string name="emoji_quick_reactions_description">Юникод эмодзи в выборе реакций</string>
+    <string name="emoji_custom_image_emojis">Пользовательские изображения эмодзи</string>
+    <string name="emoji_custom_image_description">Изображения эмодзи из вашего списка (kind 10030)</string>
+    <string name="emoji_available_custom">Доступные пользовательские эмодзи</string>
+    <string name="emoji_available_description">Все пользовательские эмодзи в вашем выборе реакций</string>
+    <string name="emoji_manage">Управление</string>
+    <string name="emoji_remove">Удалить</string>
+    <string name="emoji_save_removed">Сохранить (%d удалено)</string>
+    <string name="emoji_my_sets">Мои наборы эмодзи</string>
+    <string name="emoji_no_sets_yet">Пока нет наборов эмодзи. Нажмите + чтобы создать.</string>
+    <string name="emoji_add_custom">Добавить пользовательский эмодзи</string>
+    <string name="emoji_shortcode">Шорткод</string>
+    <string name="emoji_count_format">%d эмодзи</string>
+    <string name="emoji_library_title">Библиотека эмодзи</string>
+    <string name="emoji_add_from_keyboard">Добавить с клавиатуры</string>
+    <string name="emoji_add_from_keyboard_hint">Введите или вставьте эмодзи</string>
+    <string name="emoji_dialog_add">Добавить</string>
+    <string name="emoji_dialog_cancel">Отмена</string>
+    <string name="emoji_done_format">Готово (%d)</string>
+
+    <!-- Blossom/Media Servers Screen -->
+    <string name="blossom_title">Медиа-серверы</string>
+    <string name="blossom_broadcast">Опубликовать список серверов</string>
+    <string name="blossom_broadcast_sent">Публикация отправлена</string>
+    <string name="blossom_drag_reorder">Перетащите для изменения приоритета</string>
+
+    <!-- PoW Screen -->
+    <string name="pow_description">Proof of Work майнит хэш-префикс для ваших событий, служа защитой от спама. Большая сложность занимает больше времени, но показывает больше усилий.</string>
+    <string name="pow_notes">Заметки</string>
+    <string name="pow_enable_notes">Включить PoW для заметок</string>
+    <string name="pow_notes_subtitle">Майнить proof of work перед публикацией заметок</string>
+    <string name="pow_notes_difficulty">Сложность заметки</string>
+    <string name="pow_reactions">Реакции</string>
+    <string name="pow_enable_reactions">Включить PoW для реакций</string>
+    <string name="pow_reactions_subtitle">Майнить proof of work на реакциях (менее секунды при низкой сложности)</string>
+    <string name="pow_reactions_difficulty">Сложность реакции</string>
+    <string name="pow_dms">Личные сообщения</string>
+    <string name="pow_enable_dms">Включить PoW для ЛС</string>
+    <string name="pow_dms_subtitle">Майнить proof of work на gift wraps перед отправкой ЛС</string>
+    <string name="pow_dms_difficulty">Сложность ЛС</string>
+    <string name="pow_bits_format">%d bits</string>
+
+    <!-- Social Graph Screen -->
+    <string name="social_not_computed">Социальный граф ещё не вычислен.</string>
+
+    <!-- Console Screen -->
+    <string name="console_no_errors">Нет зарегистрированных ошибок</string>
+
+    <!-- Poll -->
+    <string name="poll_option">Вариант %d</string>
+    <string name="poll_add_option">+ Добавить вариант</string>
+    <string name="poll_single_choice">Один выбор</string>
+    <string name="poll_multiple_choice">Множественный выбор</string>
+    <string name="social_compute_now">Вычислить сейчас</string>
+    <string name="social_fetching_follows">Получение списков подписок...</string>
+    <string name="social_building_graph">Построение графа...</string>
+    <string name="social_computing_network">Вычисление сети...</string>
+    <string name="social_filtering">Фильтрация...</string>
+    <string name="social_fetching_relays">Получение списков релеев...</string>
+    <string name="social_warning">Это может занять 2\u20135 минут. Пожалуйста, оставайтесь на этом экране до завершения.</string>
+    <string name="social_top_accounts">Топ Аккаунты</string>
+    <string name="social_qualified_from">%1$d квалифицировано из %2$d подписок</string>
+    <string name="social_recompute">Пересчитать</string>
+    <string name="social_view_profile">Смотреть профиль</string>
+    <string name="social_followed_by">подписан %d</string>
+    <string name="social_followed_by_yours">Подписан %d вашими подписками</string>
+    <string name="social_complete">Вычисление завершено</string>
+    <string name="social_done">Готово</string>
+    <string name="social_failed">Обнаружение не удалось</string>
+    <string name="social_retry">Повторить</string>
+    <string name="social_stat_follows">Подписки</string>
+    <string name="social_stat_2nd_degree">2-я степень</string>
+    <string name="social_stat_qualified">Квалифицировано</string>
+    <string name="social_stat_relays">Релеи</string>
+    <string name="social_stat_follows_1st">Подписки (1-я степень)</string>
+    <string name="social_stat_2nd_users">Пользователи 2-й степени</string>
+    <string name="social_stat_qualified_thresh">Квалифицировано (порог)</string>
+    <string name="social_stat_relays_covered">Покрытые релеи</string>
+
     <string name="cd_preview">Предпросмотр</string>
     <string name="cd_check_relay_backups">Проверить бэкапы рилэев</string>
     <string name="cd_copy_address">Копировать адрес</string>
@@ -381,6 +492,9 @@
     <string name="loading_expanding_relays">Подключение к %d расширенным рилэям…</string>
     <string name="loading_subscribing">Подписка на ленту…</string>
     <string name="loading_notes">Загрузка заметок…</string>
+    <string name="loading_connecting_relays">Подключение к рилэям…</string>
+    <string name="loading_finding_posts">Поиск публикаций…</string>
+    <string name="loading_preparing_feed">Подготовка вашей ленты…</string>
     <string name="error_list_not_found">Список не найден</string>
     <string name="error_no_list_members">В этом списке нет участников</string>
     <string name="menu_add_to_relay_set">Добавить в набор рилэев</string>
@@ -402,4 +516,92 @@
     <string name="safety_hide_until_restart">Скрыть до перезапуска приложения</string>
     <string name="safety_hide_forever">Скрыть навсегда</string>
     <string name="time_24h">24ч</string>
+
+    <!-- Profile -->
+    <string name="profile_tab_notes">Заметки</string>
+    <string name="profile_tab_replies">Ответы</string>
+    <string name="profile_tab_media">Медиа</string>
+    <string name="profile_tab_following">Подписки</string>
+    <string name="profile_tab_followers">Подписчики</string>
+    <string name="profile_tab_relays">Реле</string>
+    <string name="profile_sort_recent">Недавние</string>
+    <string name="profile_sort_likes">Лайки</string>
+    <string name="profile_sort_reposts">Репосты</string>
+    <string name="profile_sort_zaps">Запы</string>
+    <string name="profile_sort_replies">Ответы</string>
+    <string name="profile_edit">Редактировать Профиль</string>
+    <string name="profile_follows_you">Подписан(а) на вас</string>
+    <string name="profile_copy_json">Копировать Профиль JSON</string>
+    <string name="profile_add_to_list">Добавить в Список</string>
+    <string name="profile_block">Заблокировать</string>
+    <string name="profile_unblock">Разблокировать</string>
+    <string name="profile_no_notes">Заметок пока нет</string>
+    <string name="profile_no_replies">Ответов пока нет</string>
+    <string name="profile_no_media">Медиа пока нет</string>
+    <string name="profile_not_following">Ни на кого не подписан</string>
+    <string name="profile_no_followers">Подписчики не найдены</string>
+    <string name="profile_no_relays">Список реле не опубликован</string>
+    <string name="profile_relay_list">Список Реле (NIP-65)</string>
+    <string name="profile_discovered_relays">Обнаруженные Реле</string>
+    <string name="profile_other_discovered_relays">Другие Обнаруженные Реле</string>
+    <string name="profile_pinned">Закреплённые</string>
+    <string name="profile_json_copied">Профиль JSON скопирован</string>
+    <string name="profile_send_message">Отправить сообщение</string>
+    <string name="profile_search_notes">Искать заметки</string>
+    <string name="profile_crawling_still">Ещё индексируется или аккаунт слишком новый</string>
+    <string name="profile_crawling_no_results">Результатов ранжирования пока нет. Проверьте позже.</string>
+
+    <!-- Wallet -->
+    <string name="wallet_connect_wallet">Подключить Кошелёк</string>
+    <string name="wallet_choose_how">Выберите способ подключения кошелька Lightning для отправки и получения сат.</string>
+    <string name="wallet_create_new">Создать Новый Кошелёк</string>
+    <string name="wallet_create_description">Создайте новый кошелёк прямо в Wisp, средства защищены провайдерами Spark</string>
+    <string name="wallet_nwc">Nostr Wallet Connect</string>
+    <string name="wallet_nwc_description">Подключите внешний кошелёк Lightning с помощью строки подключения NWC.</string>
+    <string name="wallet_connect_lightning">Подключите кошелёк Lightning для отправки и получения сат. Вставьте строку подключения NWC от вашего провайдера.</string>
+    <string name="wallet_recommended">Рекомендуемые кошельки</string>
+    <string name="wallet_nwc_connection_string">Строка Подключения NWC</string>
+    <string name="wallet_connecting">Подключение…</string>
+    <string name="wallet_connect">Подключить</string>
+    <string name="wallet_spark">Кошелёк Spark</string>
+    <string name="wallet_tap_to_reveal">Нажмите, чтобы показать</string>
+    <string name="wallet_set_up_lightning">Настроить Адрес Lightning</string>
+    <string name="wallet_get_username">Получите адрес пользователь@breez.tips</string>
+    <string name="wallet_send">Отправить</string>
+    <string name="wallet_receive">Получить</string>
+    <string name="wallet_lightning_address_invoice">Адрес Lightning или счёт</string>
+    <string name="wallet_paste">Вставить</string>
+    <string name="wallet_scan_qr">Сканировать QR</string>
+    <string name="wallet_gallery">Галерея</string>
+    <string name="wallet_next">Далее</string>
+    <string name="wallet_scan_qr_code">Сканировать QR-Код</string>
+    <string name="wallet_camera_permission">Требуется разрешение камеры</string>
+    <string name="wallet_grant_permission">Предоставить Разрешение</string>
+    <string name="wallet_point_camera">Направьте камеру на QR-код счёта или адреса Lightning</string>
+    <string name="wallet_send_to">Куда</string>
+    <string name="wallet_resolving">Разрешение…</string>
+    <string name="wallet_confirm_payment">Подтвердить Оплату</string>
+    <string name="wallet_sats">сатоши</string>
+    <string name="wallet_fees">Комиссии</string>
+    <string name="wallet_total_spent">Всего потрачено</string>
+    <string name="wallet_pay">Оплатить</string>
+    <string name="wallet_sending_payment">Отправка платежа…</string>
+    <string name="wallet_payment_received">Платёж Получен</string>
+    <string name="wallet_transactions">Транзакции</string>
+    <string name="wallet_no_transactions">Транзакций пока нет</string>
+    <string name="wallet_load_more">Загрузить ещё</string>
+    <string name="wallet_received">Получено</string>
+    <string name="wallet_sent">Отправлено</string>
+    <string name="wallet_fee">комиссия: %,d сат</string>
+    <string name="wallet_spark_sdk">SDK v%s</string>
+    <string name="wallet_not_supported">Не поддерживается вашим кошельком</string>
+    <string name="wallet_creating_invoice">Создание счёта…</string>
+
+    <!-- Diagnostics -->
+    <string name="diagnostics_title">Диагностика</string>
+    <string name="diagnostic_mode">Диагностический режим</string>
+    <string name="diagnostic_mode_description">Записывать решения об обработке событий в файл для отладки</string>
+    <string name="share_logs">Поделиться логами</string>
+    <string name="share_diagnostic_logs">Поделиться диагностическими логами</string>
+    <string name="clear_logs">Очистить логи</string>
 </resources>

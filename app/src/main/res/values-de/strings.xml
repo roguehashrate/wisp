@@ -11,8 +11,20 @@
     <string name="drawer_my_profile">Mein Profil</string>
     <string name="drawer_feeds">Feeds</string>
     <string name="drawer_lists">Listen</string>
-    <string name="drawer_drafts">Entwürfe</string>
+    <string name="drawer_drafts">Entwürfe &amp; Geplant</string>
     <string name="drawer_settings">Einstellungen</string>
+
+    <!-- Drafts & Scheduled -->
+    <string name="drafts_scheduled_title">Entwürfe &amp; Geplant</string>
+    <string name="drafts_tab">Entwürfe</string>
+    <string name="scheduled_tab">Geplant</string>
+    <string name="no_drafts_saved">Keine gespeicherten Entwürfe</string>
+    <string name="no_scheduled_posts">Keine geplanten Beiträge</string>
+    <string name="draft_label">Entwurf</string>
+    <string name="reply_label">Antwort</string>
+    <string name="delete_draft">Entwurf löschen</string>
+    <string name="empty_content">(leer)</string>
+    <string name="remove_from_schedule">Aus Planung entfernen</string>
     <string name="drawer_interface">Oberfläche</string>
     <string name="drawer_relays">Relays</string>
     <string name="drawer_media_servers">Medienserver</string>
@@ -81,6 +93,7 @@
     <string name="compose_mining">Mining läuft…</string>
     <string name="compose_post_now">Jetzt posten (%d)</string>
     <string name="compose_replying_to">Antworten an </string>
+    <string name="content_marked_nsfw">Markiert als NSFW</string>
     <string name="btn_post_now">Jetzt posten</string>
     <string name="btn_cancel">Abbrechen</string>
     <string name="btn_save">Speichern</string>
@@ -198,6 +211,12 @@
     <string name="tab_list">Liste</string>
     <string name="tab_hashtags">Hashtags</string>
     <string name="tab_feed">Feed</string>
+    <string name="interests">Interessen</string>
+    <string name="tab_feed">Feed</string>
+    <string name="loading_interest_sets">Interest-Sets werden geladen…</string>
+    <string name="no_interest_sets">Noch keine Interest-Sets. Erstelle eines unten, oder folge Hashtags von deren Feed-Seiten.</string>
+    <string name="no_hashtags_yet">Noch keine Hashtags</string>
+    <string name="delete_set">Set löschen</string>
     <string name="tab_muted_words">Stummgeschaltete Wörter</string>
     <string name="tab_muted_users">Stummgeschaltete Nutzer</string>
     <string name="tab_replies">Antworten</string>
@@ -209,6 +228,16 @@
     <string name="tab_pinned">Angeheftet</string>
     <string name="tab_new_set">Neuer Set</string>
     <string name="tab_all_relays">Alle Relays</string>
+    <string name="btn_new_set">+ Neuer Set</string>
+    <string name="tab_all_relays">Alle Relays</string>
+    <string name="tab_favorites">Favoriten</string>
+    <string name="tab_relay_sets">Relay-Sets</string>
+    <string name="tab_combined_feed">Kombinierter Feed</string>
+    <string name="relay_count_format">%d Relays</string>
+    <string name="relay_covers_format">Abdeckung %d</string>
+    <string name="error_no_relay_scores">Noch keine Relay-Bewertungen verfügbar</string>
+    <string name="btn_add_to_set">+Set</string>
+    <string name="btn_details">Details</string>
 
     <!-- Content Descriptions -->
     <string name="cd_back">Zurück</string>
@@ -271,6 +300,88 @@
     <string name="cd_add_new">Neu hinzufügen</string>
     <string name="cd_create_emoji_set">Emoji-Set erstellen</string>
     <string name="cd_upload_image">Bild hochladen</string>
+
+    <!-- Custom Emoji Screen -->
+    <string name="emoji_quick_reactions">Schnelle Reaktionen</string>
+    <string name="emoji_quick_reactions_description">Unicode-Emojis in der Reaktionsauswahl</string>
+    <string name="emoji_custom_image_emojis">Benutzerdefinierte Bild-Emojis</string>
+    <string name="emoji_custom_image_description">Bild-Emojis aus deiner Emoji-Liste (kind 10030)</string>
+    <string name="emoji_available_custom">Verfügbare benutzerdefinierte Emojis</string>
+    <string name="emoji_available_description">Alle benutzerdefinierten Emojis in deiner Reaktionsauswahl</string>
+    <string name="emoji_manage">Verwalten</string>
+    <string name="emoji_remove">Entfernen</string>
+    <string name="emoji_save_removed">Speichern (%d entfernt)</string>
+    <string name="emoji_my_sets">Meine Emoji-Sets</string>
+    <string name="emoji_no_sets_yet">Noch keine Emoji-Sets. Tippe auf + um eines zu erstellen.</string>
+    <string name="emoji_add_custom">Benutzerdefiniertes Emoji hinzufügen</string>
+    <string name="emoji_shortcode">Shortcode</string>
+    <string name="emoji_count_format">%d Emojis</string>
+    <string name="emoji_library_title">Emoji-Bibliothek</string>
+    <string name="emoji_add_from_keyboard">Vom Keyboard hinzufügen</string>
+    <string name="emoji_add_from_keyboard_hint">Emoji eingeben oder einfügen</string>
+    <string name="emoji_dialog_add">Hinzufügen</string>
+    <string name="emoji_dialog_cancel">Abbrechen</string>
+    <string name="emoji_done_format">Fertig (%d)</string>
+
+    <!-- Blossom/Media Servers Screen -->
+    <string name="blossom_title">Medienserver</string>
+    <string name="blossom_broadcast">Serverliste veröffentlichen</string>
+    <string name="blossom_broadcast_sent">Veröffentlichung gesendet</string>
+    <string name="blossom_drag_reorder">Ziehen um Priorität zu ändern</string>
+
+    <!-- PoW Screen -->
+    <string name="pow_description">Proof of Work schürft einen Hash-Präfix für deine Events und dient als Spam-Schutz. Höhere Schwierigkeit dauert länger, signalisiert aber mehr Aufwand.</string>
+    <string name="pow_notes">Notizen</string>
+    <string name="pow_enable_notes">PoW für Notizen aktivieren</string>
+    <string name="pow_notes_subtitle">Proof of Work vor dem Veröffentlichen von Notizen schürfen</string>
+    <string name="pow_notes_difficulty">Notiz-Schwierigkeit</string>
+    <string name="pow_reactions">Reaktionen</string>
+    <string name="pow_enable_reactions">PoW für Reaktionen aktivieren</string>
+    <string name="pow_reactions_subtitle">Proof of Work für Reaktionen schürfen (unter einer Sekunde bei niedriger Schwierigkeit)</string>
+    <string name="pow_reactions_difficulty">Reaktions-Schwierigkeit</string>
+    <string name="pow_dms">Direktnachrichten</string>
+    <string name="pow_enable_dms">PoW für DMs aktivieren</string>
+    <string name="pow_dms_subtitle">Proof of Work auf Gift Wraps vor dem Senden von DMs schürfen</string>
+    <string name="pow_dms_difficulty">DM-Schwierigkeit</string>
+    <string name="pow_bits_format">%d bits</string>
+
+    <!-- Social Graph Screen -->
+    <string name="social_not_computed">Sozialer Graph wurde noch nicht berechnet.</string>
+
+    <!-- Console Screen -->
+    <string name="console_no_errors">Keine Fehler protokolliert</string>
+
+    <!-- Poll -->
+    <string name="poll_option">Option %d</string>
+    <string name="poll_add_option">+ Option hinzufügen</string>
+    <string name="poll_single_choice">Einzelwahl</string>
+    <string name="poll_multiple_choice">Mehrfachauswahl</string>
+    <string name="social_compute_now">Jetzt berechnen</string>
+    <string name="social_fetching_follows">Follow-Listen werden abgerufen...</string>
+    <string name="social_building_graph">Graph wird aufgebaut...</string>
+    <string name="social_computing_network">Netzwerk wird berechnet...</string>
+    <string name="social_filtering">Wird gefiltert...</string>
+    <string name="social_fetching_relays">Relay-Listen werden abgerufen...</string>
+    <string name="social_warning">Dies kann 2\u20135 Minuten dauern. Bitte bleiben Sie auf diesem Bildschirm, bis es fertig ist.</string>
+    <string name="social_top_accounts">Top-Konten</string>
+    <string name="social_qualified_from">%1$d qualifiziert aus %2$d Follows</string>
+    <string name="social_recompute">Neu berechnen</string>
+    <string name="social_view_profile">Profil ansehen</string>
+    <string name="social_followed_by">gefolgt von %d</string>
+    <string name="social_followed_by_yours">Von %d Ihrer Follows gefolgt</string>
+    <string name="social_complete">Berechnung abgeschlossen</string>
+    <string name="social_done">Fertig</string>
+    <string name="social_failed">Erkennung fehlgeschlagen</string>
+    <string name="social_retry">Wiederholen</string>
+    <string name="social_stat_follows">Follows</string>
+    <string name="social_stat_2nd_degree">2. Grad</string>
+    <string name="social_stat_qualified">Qualifiziert</string>
+    <string name="social_stat_relays">Relays</string>
+    <string name="social_stat_follows_1st">Follows (1. Grad)</string>
+    <string name="social_stat_2nd_users">Benutzer 2. Grades</string>
+    <string name="social_stat_qualified_thresh">Qualifiziert (Schwellenwert)</string>
+    <string name="social_stat_relays_covered">Abgedeckte Relays</string>
+
     <string name="cd_preview">Vorschau</string>
     <string name="cd_check_relay_backups">Relay-Backups prüfen</string>
     <string name="cd_copy_address">Adresse kopieren</string>
@@ -408,6 +519,9 @@
     <string name="loading_expanding_relays">Verbinde mit %d erweiterten Relays…</string>
     <string name="loading_subscribing">Abonniere Feed…</string>
     <string name="loading_notes">Lade Notizen…</string>
+    <string name="loading_connecting_relays">Verbinde mit Relays…</string>
+    <string name="loading_finding_posts">Suche Beiträge…</string>
+    <string name="loading_preparing_feed">Bereite Feed vor…</string>
     <string name="error_list_not_found">Liste nicht gefunden</string>
     <string name="error_no_list_members">Diese Liste hat keine Mitglieder</string>
 
@@ -441,4 +555,92 @@
 
     <!-- Time -->
     <string name="time_24h">24h</string>
+
+    <!-- Profile -->
+    <string name="profile_tab_notes">Notizen</string>
+    <string name="profile_tab_replies">Antworten</string>
+    <string name="profile_tab_media">Medien</string>
+    <string name="profile_tab_following">Folge ich</string>
+    <string name="profile_tab_followers">Follower</string>
+    <string name="profile_tab_relays">Relays</string>
+    <string name="profile_sort_recent">Neueste</string>
+    <string name="profile_sort_likes">Gefällt mir</string>
+    <string name="profile_sort_reposts">Geteilt</string>
+    <string name="profile_sort_zaps">Zaps</string>
+    <string name="profile_sort_replies">Antworten</string>
+    <string name="profile_edit">Profil Bearbeiten</string>
+    <string name="profile_follows_you">Folgt dir</string>
+    <string name="profile_copy_json">Profil JSON Kopieren</string>
+    <string name="profile_add_to_list">Zur Liste Hinzufügen</string>
+    <string name="profile_block">Blockieren</string>
+    <string name="profile_unblock">Entblockieren</string>
+    <string name="profile_no_notes">Noch keine Notizen</string>
+    <string name="profile_no_replies">Noch keine Antworten</string>
+    <string name="profile_no_media">Noch keine Medien</string>
+    <string name="profile_not_following">Folgt niemandem</string>
+    <string name="profile_no_followers">Keine Follower gefunden</string>
+    <string name="profile_no_relays">Keine Relay-Liste veröffentlicht</string>
+    <string name="profile_relay_list">Relay-Liste (NIP-65)</string>
+    <string name="profile_discovered_relays">Entdeckte Relays</string>
+    <string name="profile_other_discovered_relays">Andere Entdeckte Relays</string>
+    <string name="profile_pinned">Angeheftet</string>
+    <string name="profile_json_copied">Profil JSON kopiert</string>
+    <string name="profile_send_message">Nachricht Senden</string>
+    <string name="profile_search_notes">Notizen Suchen</string>
+    <string name="profile_crawling_still">Noch beim Crawlen oder Konto zu neu</string>
+    <string name="profile_crawling_no_results">Noch keine gerankten Ergebnisse. Schauen Sie später vorbei.</string>
+
+    <!-- Wallet -->
+    <string name="wallet_connect_wallet">Brieftasche Verbinden</string>
+    <string name="wallet_choose_how">Wählen Sie, wie Sie eine Lightning-Brieftasche zum Senden und Empfangen von Sats verbinden.</string>
+    <string name="wallet_create_new">Neue Brieftasche Erstellen</string>
+    <string name="wallet_create_description">Erstellen Sie eine neue Brieftasche direkt in Wisp, Gelder werden von Spark-Anbietern gesichert</string>
+    <string name="wallet_nwc">Nostr Wallet Connect</string>
+    <string name="wallet_nwc_description">Verbinden Sie eine externe Lightning-Brieftasche mit einer NWC-Verbindungszeichenfolge.</string>
+    <string name="wallet_connect_lightning">Verbinden Sie eine Lightning-Brieftasche zum Senden und Empfangen von Sats. Fügen Sie eine NWC-Verbindungszeichenfolge von Ihrem Brieftaschenanbieter ein.</string>
+    <string name="wallet_recommended">Empfohlene Brieftaschen</string>
+    <string name="wallet_nwc_connection_string">NWC-Verbindungszeichenfolge</string>
+    <string name="wallet_connecting">Verbinde…</string>
+    <string name="wallet_connect">Verbinden</string>
+    <string name="wallet_spark">Spark Brieftasche</string>
+    <string name="wallet_tap_to_reveal">Tippen zum Anzeigen</string>
+    <string name="wallet_set_up_lightning">Lightning-Adresse Einrichten</string>
+    <string name="wallet_get_username">Holen Sie sich eine benutzer@breez.tips-Adresse</string>
+    <string name="wallet_send">Senden</string>
+    <string name="wallet_receive">Empfangen</string>
+    <string name="wallet_lightning_address_invoice">Lightning-Adresse oder Rechnung</string>
+    <string name="wallet_paste">Einfügen</string>
+    <string name="wallet_scan_qr">QR Scannen</string>
+    <string name="wallet_gallery">Galerie</string>
+    <string name="wallet_next">Weiter</string>
+    <string name="wallet_scan_qr_code">QR-Code Scannen</string>
+    <string name="wallet_camera_permission">Kameraberechtigung erforderlich</string>
+    <string name="wallet_grant_permission">Berechtigung Erteilen</string>
+    <string name="wallet_point_camera">Richten Sie Ihre Kamera auf einen Lightning-Rechnungs- oder Adress-QR-Code</string>
+    <string name="wallet_send_to">Senden an</string>
+    <string name="wallet_resolving">Auflösung…</string>
+    <string name="wallet_confirm_payment">Zahlung Bestätigen</string>
+    <string name="wallet_sats">Sats</string>
+    <string name="wallet_fees">Gebühren</string>
+    <string name="wallet_total_spent">Gesamtausgaben</string>
+    <string name="wallet_pay">Bezahlen</string>
+    <string name="wallet_sending_payment">Zahlung wird gesendet…</string>
+    <string name="wallet_payment_received">Zahlung Erhalten</string>
+    <string name="wallet_transactions">Transaktionen</string>
+    <string name="wallet_no_transactions">Noch keine Transaktionen</string>
+    <string name="wallet_load_more">Mehr Laden</string>
+    <string name="wallet_received">Erhalten</string>
+    <string name="wallet_sent">Gesendet</string>
+    <string name="wallet_fee">Gebühr: %,d Sats</string>
+    <string name="wallet_spark_sdk">SDK v%s</string>
+    <string name="wallet_not_supported">Von Ihrer Brieftasche nicht unterstützt</string>
+    <string name="wallet_creating_invoice">Rechnung wird erstellt…</string>
+
+    <!-- Diagnostics -->
+    <string name="diagnostics_title">Diagnose</string>
+    <string name="diagnostic_mode">Diagnosemodus</string>
+    <string name="diagnostic_mode_description">Ereignisverarbeitungsentscheidungen zur Fehlersuche in eine Datei protokollieren</string>
+    <string name="share_logs">Logs teilen</string>
+    <string name="share_diagnostic_logs">Diagnoselogs teilen</string>
+    <string name="clear_logs">Logs löschen</string>
 </resources>

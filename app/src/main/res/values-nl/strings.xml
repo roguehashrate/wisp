@@ -11,8 +11,20 @@
     <string name="drawer_my_profile">Mijn Profiel</string>
     <string name="drawer_feeds">Feeds</string>
     <string name="drawer_lists">Lijsten</string>
-    <string name="drawer_drafts">Concepten</string>
+    <string name="drawer_drafts">Concepten &amp; Gepland</string>
     <string name="drawer_settings">Instellingen</string>
+
+    <!-- Drafts & Scheduled -->
+    <string name="drafts_scheduled_title">Concepten &amp; Gepland</string>
+    <string name="drafts_tab">Concepten</string>
+    <string name="scheduled_tab">Gepland</string>
+    <string name="no_drafts_saved">Geen opgeslagen concepten</string>
+    <string name="no_scheduled_posts">Geen geplande berichten</string>
+    <string name="draft_label">Concept</string>
+    <string name="reply_label">Antwoord</string>
+    <string name="delete_draft">Concept verwijderen</string>
+    <string name="empty_content">(leeg)</string>
+    <string name="remove_from_schedule">Van planning verwijderen</string>
     <string name="drawer_interface">Interface</string>
     <string name="drawer_relays">Relays</string>
     <string name="drawer_media_servers">Mediaservers</string>
@@ -81,6 +93,7 @@
     <string name="compose_mining">Minen…</string>
     <string name="compose_post_now">Nu plaatsen (%d)</string>
     <string name="compose_replying_to">Reageren op </string>
+    <string name="content_marked_nsfw">Gemarkeerd als NSFW</string>
     <string name="btn_post_now">Nu Plaatstellen</string>
     <string name="btn_cancel">Annuleren</string>
     <string name="btn_save">Opslaan</string>
@@ -198,6 +211,12 @@
     <string name="tab_list">Lijst</string>
     <string name="tab_hashtags">Hashtags</string>
     <string name="tab_feed">Feed</string>
+    <string name="interests">Interesses</string>
+    <string name="tab_feed">Feed</string>
+    <string name="loading_interest_sets">Interessesets laden…</string>
+    <string name="no_interest_sets">Nog geen interessesets. Maak er een hieronder aan, of volg hashtags vanaf hun feed-pagina\'s.</string>
+    <string name="no_hashtags_yet">Nog geen hashtags</string>
+    <string name="delete_set">Set verwijderen</string>
     <string name="tab_muted_words">Gedempte Woorden</string>
     <string name="tab_muted_users">Gedempte Gebruikers</string>
     <string name="tab_replies">Antwoorden</string>
@@ -209,6 +228,16 @@
     <string name="tab_pinned">Vastgemaakt</string>
     <string name="tab_new_set">Nieuwe Set</string>
     <string name="tab_all_relays">Alle relays</string>
+    <string name="btn_new_set">+ Nieuwe Set</string>
+    <string name="tab_all_relays">Alle relays</string>
+    <string name="tab_favorites">Favorieten</string>
+    <string name="tab_relay_sets">Relay Sets</string>
+    <string name="tab_combined_feed">Gecombineerde Feed</string>
+    <string name="relay_count_format">%d relays</string>
+    <string name="relay_covers_format">dekt %d</string>
+    <string name="error_no_relay_scores">Nog geen relay-scores beschikbaar</string>
+    <string name="btn_add_to_set">+Set</string>
+    <string name="btn_details">Details</string>
 
     <!-- Content Descriptions -->
     <string name="cd_back">Terug</string>
@@ -271,6 +300,88 @@
     <string name="cd_add_new">Nieuw Toevoegen</string>
     <string name="cd_create_emoji_set">Emoji Set Maken</string>
     <string name="cd_upload_image">Afbeelding Uploaden</string>
+
+    <!-- Custom Emoji Screen -->
+    <string name="emoji_quick_reactions">Snelle Reacties</string>
+    <string name="emoji_quick_reactions_description">Unicode emoji\'s getoond in de reactiepicker</string>
+    <string name="emoji_custom_image_emojis">Aangepaste Afbeelding Emoji\'s</string>
+    <string name="emoji_custom_image_description">Afbeelding emoji\'s van je emoji lijst (kind 10030)</string>
+    <string name="emoji_available_custom">Beschikbare Aangepaste Emoji\'s</string>
+    <string name="emoji_available_description">Alle aangepaste emoji\'s beschikbaar in je reactiepicker</string>
+    <string name="emoji_manage">Beheren</string>
+    <string name="emoji_remove">Verwijderen</string>
+    <string name="emoji_save_removed">Opslaan (%d verwijderd)</string>
+    <string name="emoji_my_sets">Mijn Emoji Sets</string>
+    <string name="emoji_no_sets_yet">Nog geen emoji sets. Tik + om er een te maken.</string>
+    <string name="emoji_add_custom">Aangepaste Emoji Toevoegen</string>
+    <string name="emoji_shortcode">Shortcode</string>
+    <string name="emoji_count_format">%d emoji\'s</string>
+    <string name="emoji_library_title">Emoji Bibliotheek</string>
+    <string name="emoji_add_from_keyboard">Van toetsenbord toevoegen</string>
+    <string name="emoji_add_from_keyboard_hint">Typ of plak een emoji</string>
+    <string name="emoji_dialog_add">Toevoegen</string>
+    <string name="emoji_dialog_cancel">Annuleren</string>
+    <string name="emoji_done_format">Klaar (%d)</string>
+
+    <!-- Blossom/Media Servers Screen -->
+    <string name="blossom_title">Mediaservers</string>
+    <string name="blossom_broadcast">Serverlijst publiceren</string>
+    <string name="blossom_broadcast_sent">Publicatie verzonden</string>
+    <string name="blossom_drag_reorder">Sleep om prioriteit te wijzigen</string>
+
+    <!-- PoW Screen -->
+    <string name="pow_description">Proof of Work mijn een hash-prefix op uw evenementen, dienend als een spam-afschrikmiddel. Hogere moeilijkheidsgraad duurt langer maar signaleert meer moeite.</string>
+    <string name="pow_notes">Notities</string>
+    <string name="pow_enable_notes">PoW inschakelen voor notities</string>
+    <string name="pow_notes_subtitle">Mijn proof of work voor het publiceren van notities</string>
+    <string name="pow_notes_difficulty">Notitie moeilijkheidsgraad</string>
+    <string name="pow_reactions">Reacties</string>
+    <string name="pow_enable_reactions">PoW inschakelen voor reacties</string>
+    <string name="pow_reactions_subtitle">Mijn proof of work op reacties (minder dan een seconde bij lage moeilijkheidsgraad)</string>
+    <string name="pow_reactions_difficulty">Reactie moeilijkheidsgraad</string>
+    <string name="pow_dms">Directe Berichten</string>
+    <string name="pow_enable_dms">PoW inschakelen voor DMs</string>
+    <string name="pow_dms_subtitle">Mijn proof of work op gift wraps voordat u DMs verzendt</string>
+    <string name="pow_dms_difficulty">DM moeilijkheidsgraad</string>
+    <string name="pow_bits_format">%d bits</string>
+
+    <!-- Social Graph Screen -->
+    <string name="social_not_computed">Sociaal graaf is nog niet berekend.</string>
+
+    <!-- Console Screen -->
+    <string name="console_no_errors">Geen fouten gelogd</string>
+
+    <!-- Poll -->
+    <string name="poll_option">Optie %d</string>
+    <string name="poll_add_option">+ Optie toevoegen</string>
+    <string name="poll_single_choice">Enkele keuze</string>
+    <string name="poll_multiple_choice">Meerdere keuzes</string>
+    <string name="social_compute_now">Nu Berekenen</string>
+    <string name="social_fetching_follows">Ophalen van follow-lijsten...</string>
+    <string name="social_building_graph">Graaf bouwen...</string>
+    <string name="social_computing_network">Netwerk berekenen...</string>
+    <string name="social_filtering">Filteren...</string>
+    <string name="social_fetching_relays">Ophalen van relay-lijsten...</string>
+    <string name="social_warning">Dit kan 2\u20135 minuten duren. Blijf op dit scherm tot het klaar is.</string>
+    <string name="social_top_accounts">Top Accounts</string>
+    <string name="social_qualified_from">%1$d gekwalificeerd van %2$d follows</string>
+    <string name="social_recompute">Opnieuw Berekenen</string>
+    <string name="social_view_profile">Profiel Bekijken</string>
+    <string name="social_followed_by">gevolgd door %d</string>
+    <string name="social_followed_by_yours">Gevolgd door %d van je follows</string>
+    <string name="social_complete">Berekening voltooid</string>
+    <string name="social_done">Klaar</string>
+    <string name="social_failed">Ontdekking mislukt</string>
+    <string name="social_retry">Opnieuw Proberen</string>
+    <string name="social_stat_follows">Follows</string>
+    <string name="social_stat_2nd_degree">2e graad</string>
+    <string name="social_stat_qualified">Gekwalificeerd</string>
+    <string name="social_stat_relays">Relays</string>
+    <string name="social_stat_follows_1st">Follows (1e graad)</string>
+    <string name="social_stat_2nd_users">2e graad gebruikers</string>
+    <string name="social_stat_qualified_thresh">Gekwalificeerd (drempel)</string>
+    <string name="social_stat_relays_covered">Relays gedekt</string>
+
     <string name="cd_preview">Voorbeeld</string>
     <string name="cd_check_relay_backups">Relay Backups Controleren</string>
     <string name="cd_copy_address">Adres Kopiëren</string>
@@ -408,6 +519,9 @@
     <string name="loading_expanding_relays">Verbinden met %d uitgebreide relays…</string>
     <string name="loading_subscribing">Abonneren op feed…</string>
     <string name="loading_notes">Notities laden…</string>
+    <string name="loading_connecting_relays">Verbinden met relays…</string>
+    <string name="loading_finding_posts">Zoeken naar berichten…</string>
+    <string name="loading_preparing_feed">Je feed voorbereiden…</string>
     <string name="error_list_not_found">Lijst niet gevonden</string>
     <string name="error_no_list_members">Deze lijst heeft geen leden</string>
 
@@ -441,4 +555,92 @@
 
     <!-- Time -->
     <string name="time_24h">24u</string>
+
+    <!-- Profile -->
+    <string name="profile_tab_notes">Notities</string>
+    <string name="profile_tab_replies">Antwoorden</string>
+    <string name="profile_tab_media">Media</string>
+    <string name="profile_tab_following">Volgend</string>
+    <string name="profile_tab_followers">Volgers</string>
+    <string name="profile_tab_relays">Relays</string>
+    <string name="profile_sort_recent">Recente</string>
+    <string name="profile_sort_likes">Vind ik leuk</string>
+    <string name="profile_sort_reposts">Gedeeld</string>
+    <string name="profile_sort_zaps">Zaps</string>
+    <string name="profile_sort_replies">Antwoorden</string>
+    <string name="profile_edit">Profiel Bewerken</string>
+    <string name="profile_follows_you">Volgt jou</string>
+    <string name="profile_copy_json">Profiel JSON Kopiëren</string>
+    <string name="profile_add_to_list">Aan Lijst Toevoegen</string>
+    <string name="profile_block">Blokkeren</string>
+    <string name="profile_unblock">Deblokkeren</string>
+    <string name="profile_no_notes">Nog geen notities</string>
+    <string name="profile_no_replies">Nog geen antwoorden</string>
+    <string name="profile_no_media">Nog geen media</string>
+    <string name="profile_not_following">Volgt niemand</string>
+    <string name="profile_no_followers">Geen volgers gevonden</string>
+    <string name="profile_no_relays">Geen relay lijst gepubliceerd</string>
+    <string name="profile_relay_list">Relay Lijst (NIP-65)</string>
+    <string name="profile_discovered_relays">Ontdekte Relays</string>
+    <string name="profile_other_discovered_relays">Andere Ontdekte Relays</string>
+    <string name="profile_pinned">Vastgemaakt</string>
+    <string name="profile_json_copied">Profiel JSON gekopieerd</string>
+    <string name="profile_send_message">Bericht Sturen</string>
+    <string name="profile_search_notes">Notities Zoeken</string>
+    <string name="profile_crawling_still">Nog aan het crawlen of account te nieuw</string>
+    <string name="profile_crawling_no_results">Nog geen gerangschikte resultaten. Kom later terug.</string>
+
+    <!-- Wallet -->
+    <string name="wallet_connect_wallet">Portemonnee Verbinden</string>
+    <string name="wallet_choose_how">Kies hoe je een Lightning portemonnee verbindt voor het verzenden en ontvangen van sats.</string>
+    <string name="wallet_create_new">Nieuwe Portemonnee Maken</string>
+    <string name="wallet_create_description">Maak een nieuwe portemonnee direct in Wisp, fondsen zijn beveiligd door Spark providers</string>
+    <string name="wallet_nwc">Nostr Wallet Connect</string>
+    <string name="wallet_nwc_description">Verbind een externe Lightning portemonnee met een NWC verbindingsreeks.</string>
+    <string name="wallet_connect_lightning">Verbind een Lightning portemonnee om sats te verzenden en ontvangen. Plak een NWC verbindingsreeks van je portemonnee provider.</string>
+    <string name="wallet_recommended">Aanbevolen portemonnees</string>
+    <string name="wallet_nwc_connection_string">NWC Verbindingsreeks</string>
+    <string name="wallet_connecting">Verbinden…</string>
+    <string name="wallet_connect">Verbinden</string>
+    <string name="wallet_spark">Spark Portemonnee</string>
+    <string name="wallet_tap_to_reveal">Tik om te onthullen</string>
+    <string name="wallet_set_up_lightning">Lightning Adres Instellen</string>
+    <string name="wallet_get_username">Krijg een gebruiker@breez.tips adres</string>
+    <string name="wallet_send">Verzenden</string>
+    <string name="wallet_receive">Ontvangen</string>
+    <string name="wallet_lightning_address_invoice">Lightning adres of factuur</string>
+    <string name="wallet_paste">Plakken</string>
+    <string name="wallet_scan_qr">QR Scannen</string>
+    <string name="wallet_gallery">Galerij</string>
+    <string name="wallet_next">Volgende</string>
+    <string name="wallet_scan_qr_code">QR Code Scannen</string>
+    <string name="wallet_camera_permission">Cameratoestemming vereist</string>
+    <string name="wallet_grant_permission">Toestemming Verlenen</string>
+    <string name="wallet_point_camera">Richt je camera op een Lightning factuur of adres QR code</string>
+    <string name="wallet_send_to">Verzenden naar</string>
+    <string name="wallet_resolving">Oplossen…</string>
+    <string name="wallet_confirm_payment">Betaling Bevestigen</string>
+    <string name="wallet_sats">sats</string>
+    <string name="wallet_fees">Kosten</string>
+    <string name="wallet_total_spent">Totaal besteed</string>
+    <string name="wallet_pay">Betaling</string>
+    <string name="wallet_sending_payment">Betaling verzenden…</string>
+    <string name="wallet_payment_received">Betaling Ontvangen</string>
+    <string name="wallet_transactions">Transacties</string>
+    <string name="wallet_no_transactions">Nog geen transacties</string>
+    <string name="wallet_load_more">Meer laden</string>
+    <string name="wallet_received">Ontvangen</string>
+    <string name="wallet_sent">Verzonden</string>
+    <string name="wallet_fee">kosten: %,d sats</string>
+    <string name="wallet_spark_sdk">SDK v%s</string>
+    <string name="wallet_not_supported">Niet ondersteund door je portemonnee</string>
+    <string name="wallet_creating_invoice">Factuur maken…</string>
+
+    <!-- Diagnostics -->
+    <string name="diagnostics_title">Diagnostiek</string>
+    <string name="diagnostic_mode">Diagnostische modus</string>
+    <string name="diagnostic_mode_description">Log gebeurtenisverwerkingsbeslissingen naar een bestand voor debugging</string>
+    <string name="share_logs">Logs delen</string>
+    <string name="share_diagnostic_logs">Diagnostische logs delen</string>
+    <string name="clear_logs">Logs wissen</string>
 </resources>
