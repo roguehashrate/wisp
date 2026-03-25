@@ -83,6 +83,8 @@
     <string name="compose_publishing">Publishing…</string>
     <string name="compose_uploading">Uploading…</string>
     <string name="compose_mining">Mining in progress…</string>
+    <string name="compose_scheduling">Scheduling…</string>
+    <string name="compose_schedule_post">Schedule Post</string>
     <string name="compose_post_now">Post now (%d)</string>
     <string name="compose_replying_to">Replying to </string>
     <string name="content_marked_nsfw">Marked as NSFW</string>
