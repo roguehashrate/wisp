@@ -240,12 +240,13 @@
     <string name="cd_sent_with">Sent with</string>
     <string name="cd_filter_notifications">Filter notifications</string>
     <string name="filter_all">All</string>
-    <string name="filter_zen">Zen</string>
     <string name="filter_replies">Replies</string>
-    <string name="filter_reactions">Reactions</string>
     <string name="filter_zaps">Zaps</string>
     <string name="filter_reposts">Reposts</string>
     <string name="filter_mentions">Mentions</string>
+    <string name="filter_reactions">Reactions</string>
+    <string name="filter_votes">Votes</string>
+    <string name="filter_dms">DMs</string>
     <string name="cd_mute_notifications">Mute notifications</string>
     <string name="cd_unmute_notifications">Unmute notifications</string>
     <string name="cd_reposted">reposted</string>

@@ -265,7 +265,7 @@ fun NotificationsScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        currentFilter.label,
+                                        stringResource(currentFilter.labelResId),
                                         style = MaterialTheme.typography.titleMedium,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
@@ -285,7 +285,7 @@ fun NotificationsScreen(
                             ) {
                                 NotificationFilter.entries.forEach { filterOption ->
                                     DropdownMenuItem(
-                                        text = { Text(filterOption.label) },
+                                        text = { Text(stringResource(filterOption.labelResId)) },
                                         onClick = {
                                             showFilterDropdown = false
                                             viewModel.setFilter(filterOption)

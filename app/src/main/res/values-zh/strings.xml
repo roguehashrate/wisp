@@ -245,6 +245,8 @@
     <string name="filter_zaps">闪电支付</string>
     <string name="filter_reposts">转发</string>
     <string name="filter_mentions">提及</string>
+    <string name="filter_votes">投票</string>
+    <string name="filter_dms">私信</string>
     <string name="cd_mute_notifications">静音通知</string>
     <string name="cd_unmute_notifications">取消静音通知</string>
     <string name="cd_reposted">已转发</string>

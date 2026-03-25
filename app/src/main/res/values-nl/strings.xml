@@ -245,6 +245,8 @@
     <string name="filter_zaps">Zaps</string>
     <string name="filter_reposts">Delen</string>
     <string name="filter_mentions">Vermeldingen</string>
+    <string name="filter_votes">Stemmen</string>
+    <string name="filter_dms">Berichten</string>
     <string name="cd_mute_notifications">Meldingen Dempen</string>
     <string name="cd_unmute_notifications">Meldingen Aanzetten</string>
     <string name="cd_reposted">gedeeld</string>

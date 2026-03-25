@@ -245,6 +245,8 @@
     <string name="filter_zaps">잽</string>
     <string name="filter_reposts">리포스트</string>
     <string name="filter_mentions">멘션</string>
+    <string name="filter_votes">투표</string>
+    <string name="filter_dms">메시지</string>
     <string name="cd_mute_notifications">알림 음소거</string>
     <string name="cd_unmute_notifications">알림 음소거 해제</string>
     <string name="cd_reposted">리포스트됨</string>

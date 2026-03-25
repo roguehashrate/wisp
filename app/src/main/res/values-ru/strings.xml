@@ -228,6 +228,8 @@
     <string name="filter_zaps">Zaps</string>
     <string name="filter_reposts">Репосты</string>
     <string name="filter_mentions">Упоминания</string>
+    <string name="filter_votes">Голоса</string>
+    <string name="filter_dms">Сообщения</string>
     <string name="cd_mute_notifications">Заглушить уведомления</string>
     <string name="cd_unmute_notifications">Включить уведомления</string>
     <string name="cd_reposted">репост</string>

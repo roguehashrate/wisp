@@ -245,6 +245,8 @@
     <string name="filter_zaps">Zaps</string>
     <string name="filter_reposts">Republicaciones</string>
     <string name="filter_mentions">Menciones</string>
+    <string name="filter_votes">Votos</string>
+    <string name="filter_dms">Mensajes</string>
     <string name="cd_mute_notifications">Silenciar notificaciones</string>
     <string name="cd_unmute_notifications">Activar notificaciones</string>
     <string name="cd_reposted">republicado</string>

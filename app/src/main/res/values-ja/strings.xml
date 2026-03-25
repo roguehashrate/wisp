@@ -245,6 +245,8 @@
     <string name="filter_zaps">サップ</string>
     <string name="filter_reposts">リポスト</string>
     <string name="filter_mentions">メンション</string>
+    <string name="filter_votes">投票</string>
+    <string name="filter_dms">メッセージ</string>
     <string name="cd_mute_notifications">通知をミュート</string>
     <string name="cd_unmute_notifications">通知のミュートを解除</string>
     <string name="cd_reposted">リポスト済み</string>
