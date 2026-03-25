@@ -357,7 +357,7 @@ fun FeedScreen(
                     .navigationBarsPadding()
             ) {
                 Text(
-                    "Online Now",
+                    stringResource(R.string.online_now),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -369,7 +369,7 @@ fun FeedScreen(
                     }
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        "${onlinePubkeys.size} online in your network",
+                        stringResource(R.string.online_in_network, onlinePubkeys.size),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -382,7 +382,7 @@ fun FeedScreen(
                         }
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            "$globalOnlineCount online across all of Nostr",
+                            stringResource(R.string.online_all_nostr, globalOnlineCount ?: 0),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
