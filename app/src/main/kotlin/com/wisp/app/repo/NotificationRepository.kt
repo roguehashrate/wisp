@@ -108,7 +108,9 @@ class NotificationRepository(
             val isOwnEvent = when {
                 referencedEvent != null -> referencedEvent.pubkey == myPubkey
                 referencedId != null -> referencedId in myOwnEventIds
-                else -> false
+                // No e-tag: profile/DM zap addressed directly to us via p-tag.
+                // The relay subscription already filtered by p-tag = myPubkey so this is safe.
+                else -> event.kind == 9735 && event.tags.any { it.size >= 2 && it[0] == "p" && it[1] == myPubkey }
             }
             if (!isOwnEvent) {
                 if (DiagnosticLogger.isEnabled) {

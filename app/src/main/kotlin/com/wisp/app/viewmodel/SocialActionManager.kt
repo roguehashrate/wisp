@@ -317,6 +317,39 @@ class SocialActionManager(
         }
     }
 
+    fun sendZapToPubkey(
+        pubkey: String,
+        amountMsats: Long,
+        message: String = "",
+        isAnonymous: Boolean = false,
+        rumorId: String? = null
+    ) {
+        val lud16 = eventRepo.getProfileData(pubkey)?.lud16
+        if (lud16.isNullOrBlank()) {
+            _zapError.tryEmit("This user has no lightning address")
+            return
+        }
+        val wallet = getWalletProvider()
+        if (wallet.hasConnection() && !wallet.isConnected.value) wallet.connect()
+        scope.launch {
+            _zapInProgress.value = _zapInProgress.value + pubkey
+            val result = zapSender.sendZap(
+                recipientLud16 = lud16,
+                recipientPubkey = pubkey,
+                eventId = rumorId,
+                amountMsats = amountMsats,
+                message = message,
+                isAnonymous = isAnonymous,
+                isPrivate = false
+            )
+            _zapInProgress.value = _zapInProgress.value - pubkey
+            result.fold(
+                onSuccess = { _zapSuccess.tryEmit(pubkey) },
+                onFailure = { e -> _zapError.tryEmit(e.message ?: "Zap failed") }
+            )
+        }
+    }
+
     fun publishPollVote(pollEventId: String, optionIds: List<String>) {
         val s = getSigner() ?: return
         scope.launch {
