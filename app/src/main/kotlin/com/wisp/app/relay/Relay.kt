@@ -140,8 +140,10 @@ class Relay(
                     onBytesReceived?.invoke(config.url, text.length)
                     val msg = RelayMessage.parse(text) ?: return
                     if (msg is RelayMessage.Auth) {
-                        lastChallenge = msg.challenge
-                        _authChallenges.tryEmit(msg.challenge)
+                        if (lastChallenge != msg.challenge) {
+                            lastChallenge = msg.challenge
+                            _authChallenges.tryEmit(msg.challenge)
+                        }
                     } else {
                         _messages.tryEmit(msg)
                     }
