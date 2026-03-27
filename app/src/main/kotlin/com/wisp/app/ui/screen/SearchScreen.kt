@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -44,8 +45,11 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -133,6 +137,9 @@ fun SearchScreen(
 
     var filterMenuExpanded by remember { mutableStateOf(false) }
     var advancedExpanded by remember { mutableStateOf(authorFilter != null) }
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -158,20 +165,24 @@ fun SearchScreen(
                             expanded = filterMenuExpanded,
                             onDismissRequest = { filterMenuExpanded = false }
                         ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.tab_people)) },
-                                onClick = {
-                                    viewModel.selectFilter(SearchFilter.PEOPLE)
-                                    filterMenuExpanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.tab_notes)) },
-                                onClick = {
-                                    viewModel.selectFilter(SearchFilter.NOTES)
-                                    filterMenuExpanded = false
-                                }
-                            )
+                            if (filter != SearchFilter.PEOPLE) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tab_people)) },
+                                    onClick = {
+                                        viewModel.selectFilter(SearchFilter.PEOPLE)
+                                        filterMenuExpanded = false
+                                    }
+                                )
+                            }
+                            if (filter != SearchFilter.NOTES) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tab_notes)) },
+                                    onClick = {
+                                        viewModel.selectFilter(SearchFilter.NOTES)
+                                        filterMenuExpanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 },
@@ -179,7 +190,6 @@ fun SearchScreen(
                     TextField(
                         value = query,
                         onValueChange = { viewModel.updateQuery(it) },
-                        placeholder = { Text(stringResource(R.string.placeholder_search_users_notes)) },
                         singleLine = true,
                         trailingIcon = {
                             if (query.isNotEmpty()) {
@@ -189,16 +199,20 @@ fun SearchScreen(
                             }
                         },
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
                         ),
+                        shape = RoundedCornerShape(50),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(
                             onSearch = { viewModel.search(query, relayPool, eventRepo, muteRepo) }
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .focusRequester(focusRequester)
                     )
                 },
                 actions = {
