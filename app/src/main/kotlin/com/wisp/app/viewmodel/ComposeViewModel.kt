@@ -202,10 +202,13 @@ class ComposeViewModel(app: Application, private val savedStateHandle: SavedStat
                     val (bytes, mime, ext) = readFileFromUri(contentResolver, uri)
                     val url = blossomRepo.uploadMedia(bytes, mime, ext, signer)
                     _uploadedUrls.value = _uploadedUrls.value + url
-                    val current = _content.value.text
-                    val newText = if (current.isBlank()) url else "$current\n$url"
-                    _content.value = TextFieldValue(newText, TextRange(newText.length))
-                    savedStateHandle["draft_content"] = newText
+                    // In gallery mode, don't insert URLs into the text — they're shown in the pager
+                    if (!_galleryMode.value) {
+                        val current = _content.value.text
+                        val newText = if (current.isBlank()) url else "$current\n$url"
+                        _content.value = TextFieldValue(newText, TextRange(newText.length))
+                        savedStateHandle["draft_content"] = newText
+                    }
                 } catch (e: Exception) {
                     _error.value = "Upload failed: ${e.message}"
                     break

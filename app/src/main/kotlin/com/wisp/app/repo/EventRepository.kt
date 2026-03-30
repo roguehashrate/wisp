@@ -942,10 +942,14 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
 
     fun getOldestTimestamp(): Long? {
         // Return oldest from the filtered feed so loadMore pages correctly
-        val filter = _authorFilter.value
+        val authorFilter = _authorFilter.value
+        val kindFilter = _kindFilter
         return synchronized(feedList) {
-            if (filter == null) feedList.lastOrNull()?.let { effectiveSortTime(it) }
-            else feedList.lastOrNull { it.pubkey in filter || isRepostedByAny(it.id, filter) }?.let { effectiveSortTime(it) }
+            feedList.lastOrNull { event ->
+                val authorOk = authorFilter == null || event.pubkey in authorFilter || isRepostedByAny(event.id, authorFilter)
+                val kindOk = kindFilter == null || event.kind in kindFilter
+                authorOk && kindOk
+            }?.let { effectiveSortTime(it) }
         }
     }
 
