@@ -47,9 +47,12 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -96,6 +99,7 @@ import coil3.compose.AsyncImage
 import com.wisp.app.R
 import com.wisp.app.nostr.Nip19
 import com.wisp.app.nostr.NostrSigner
+import com.wisp.app.nostr.hexToByteArray
 import com.wisp.app.nostr.ProfileData
 import com.wisp.app.relay.RelayPool
 import com.wisp.app.repo.EventRepository
@@ -138,6 +142,9 @@ fun GroupRoomScreen(
     zapAnimatingIds: Set<String> = emptySet(),
     zapInProgressIds: Set<String> = emptySet(),
     onOpenEmojiLibrary: (() -> Unit)? = null,
+    onFollowAuthor: ((String) -> Unit)? = null,
+    onBlockAuthor: ((String) -> Unit)? = null,
+    isFollowing: ((String) -> Boolean)? = null,
     noteActions: com.wisp.app.ui.component.NoteActions? = null
 ) {
     val textFieldFocus = remember { FocusRequester() }
@@ -303,6 +310,9 @@ fun GroupRoomScreen(
                             },
                             onZap = onZap,
                             onOpenEmojiLibrary = onOpenEmojiLibrary,
+                            onFollowAuthor = onFollowAuthor,
+                            onBlockAuthor = onBlockAuthor,
+                            isFollowing = isFollowing,
                             noteActions = noteActions
                         )
                     }
@@ -736,6 +746,9 @@ private fun GroupMessageBubble(
     onReact: (messageId: String, senderPubkey: String, emoji: String) -> Unit,
     onZap: ((messageId: String, senderPubkey: String) -> Unit)? = null,
     onOpenEmojiLibrary: (() -> Unit)? = null,
+    onFollowAuthor: ((String) -> Unit)? = null,
+    onBlockAuthor: ((String) -> Unit)? = null,
+    isFollowing: ((String) -> Boolean)? = null,
     noteActions: com.wisp.app.ui.component.NoteActions? = null
 ) {
     val profile = remember(message.senderPubkey) { eventRepo.getProfileData(message.senderPubkey) }
@@ -1016,6 +1029,95 @@ private fun GroupMessageBubble(
                         onOpenEmojiLibrary = onOpenEmojiLibrary?.let { { showEmojiPicker = false; it() } }
                     )
                 }
+            }
+        }
+        // 3-dot overflow menu — far right of message
+        Box(modifier = Modifier.align(Alignment.Top)) {
+            var menuExpanded by remember { mutableStateOf(false) }
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+            val isOwnMessage = message.senderPubkey == myPubkey
+            IconButton(
+                onClick = { menuExpanded = true },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.cd_more_options),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false }
+            ) {
+                if (!isOwnMessage && onFollowAuthor != null) {
+                    val following = isFollowing?.invoke(message.senderPubkey) ?: false
+                    DropdownMenuItem(
+                        text = { Text(if (following) stringResource(R.string.btn_unfollow) else stringResource(R.string.btn_follow)) },
+                        onClick = {
+                            menuExpanded = false
+                            onFollowAuthor(message.senderPubkey)
+                        }
+                    )
+                }
+                if (!isOwnMessage && onBlockAuthor != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.btn_block)) },
+                        onClick = {
+                            menuExpanded = false
+                            onBlockAuthor(message.senderPubkey)
+                        }
+                    )
+                }
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.btn_share)) },
+                    onClick = {
+                        menuExpanded = false
+                        try {
+                            val nevent = Nip19.neventEncode(message.id.hexToByteArray())
+                            val url = "https://njump.me/$nevent"
+                            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(android.content.Intent.EXTRA_TEXT, url)
+                            }
+                            context.startActivity(android.content.Intent.createChooser(intent, null))
+                        } catch (_: Exception) {}
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.btn_copy_note_id)) },
+                    onClick = {
+                        menuExpanded = false
+                        try {
+                            val relays = eventRepo.getEventRelays(message.id).take(3).toList()
+                            val neventId = Nip19.neventEncode(
+                                eventId = message.id.hexToByteArray(),
+                                relays = relays,
+                                author = message.senderPubkey.hexToByteArray()
+                            )
+                            clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(neventId))
+                        } catch (_: Exception) {}
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.btn_copy_note_json)) },
+                    onClick = {
+                        menuExpanded = false
+                        val event = eventRepo.getEvent(message.id)
+                        if (event != null) {
+                            clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(event.toJson()))
+                        }
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.btn_copy_text)) },
+                    onClick = {
+                        menuExpanded = false
+                        clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
+                    }
+                )
             }
         }
     }

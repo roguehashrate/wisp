@@ -1563,6 +1563,9 @@ fun WispNavHost(
                 zapAnimatingIds = groupRoomZapAnimatingIds,
                 zapInProgressIds = groupRoomZapInProgress,
                 onOpenEmojiLibrary = { showGroupRoomEmojiLibrary = true },
+                onFollowAuthor = { pubkey -> feedViewModel.toggleFollow(pubkey) },
+                onBlockAuthor = { pubkey -> feedViewModel.blockUser(pubkey) },
+                isFollowing = { pubkey -> feedViewModel.contactRepo.isFollowing(pubkey) },
                 noteActions = remember {
                     com.wisp.app.ui.component.NoteActions(
                         onNoteClick = { eventId -> navController.navigate("thread/$eventId") },
