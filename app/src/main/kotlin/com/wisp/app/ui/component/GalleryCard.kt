@@ -204,6 +204,8 @@ fun GalleryCard(
     val timestamp = remember(event.created_at) { formatGalleryTimestamp(event.created_at) }
 
     var showFullScreenViewer by remember { mutableStateOf(false) }
+    var fullScreenVideoUrl by remember { mutableStateOf<String?>(null) }
+    var fullScreenVideoStartMs by remember { mutableStateOf(0L) }
 
     Column(
         modifier = modifier
@@ -468,49 +470,15 @@ fun GalleryCard(
                 }
             }
         } else if (videoEntries.isNotEmpty()) {
-            // Video event (kind 21/22)
+            // Video event (kind 21/22) — use inline video player, same as kind 1 feed
             val video = videoEntries[0]
-            val defaultAspect = if (event.kind == 22) 9f / 16f else 16f / 9f
-            val aspectRatio = parseAspectRatio(video.dim) ?: defaultAspect
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(aspectRatio.coerceIn(0.5f, 2.5f))
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable { showFullScreenViewer = true },
-                contentAlignment = Alignment.Center
-            ) {
-                // Thumbnail or placeholder
-                if (video.thumbnailUrl != null) {
-                    AsyncImage(
-                        model = video.thumbnailUrl,
-                        contentDescription = title ?: "Video thumbnail",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                    )
+            InlineVideoPlayerWithFullscreen(
+                url = video.url,
+                onFullScreen = { positionMs ->
+                    fullScreenVideoUrl = video.url
+                    fullScreenVideoStartMs = positionMs
                 }
-                // Play button overlay
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.5f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.PlayArrow,
-                        contentDescription = "Play video",
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-            }
+            )
         }
 
         // Description (event.content)
@@ -557,14 +525,23 @@ fun GalleryCard(
         )
     }
 
-    // Full-screen gallery viewer
+    // Full-screen gallery viewer (images)
     if (showFullScreenViewer) {
         FullScreenGalleryViewer(
             imageEntries = imageEntries,
-            videoEntries = videoEntries,
+            videoEntries = emptyList(),
             caption = event.content.takeIf { it.isNotBlank() },
             eventKind = event.kind,
             onDismiss = { showFullScreenViewer = false }
+        )
+    }
+
+    // Full-screen video player (uses existing ExoPlayer-based player)
+    if (fullScreenVideoUrl != null) {
+        FullScreenVideoPlayer(
+            videoUrl = fullScreenVideoUrl!!,
+            startPositionMs = fullScreenVideoStartMs,
+            onDismiss = { fullScreenVideoUrl = null }
         )
     }
 }

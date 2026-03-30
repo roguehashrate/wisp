@@ -1960,7 +1960,7 @@ private fun ImageWithContextMenu(url: String, onFullScreen: () -> Unit) {
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun InlineVideoPlayerWithFullscreen(url: String, onFullScreen: (positionMs: Long) -> Unit) {
+internal fun InlineVideoPlayerWithFullscreen(url: String, onFullScreen: (positionMs: Long) -> Unit) {
     val mediaSettings = LocalMediaSettings.current
     var loaded by remember { mutableStateOf(mediaSettings.autoLoadMedia) }
 
