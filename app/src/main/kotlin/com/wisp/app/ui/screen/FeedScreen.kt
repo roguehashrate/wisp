@@ -699,6 +699,28 @@ fun FeedScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
                             ) {
+                                // Content type filter toggle — rotates through All → Notes → Gallery → Polls
+                                IconButton(
+                                    onClick = {
+                                        val next = when (contentFilter) {
+                                            FeedContentFilter.ALL -> FeedContentFilter.TEXT_ONLY
+                                            FeedContentFilter.TEXT_ONLY -> FeedContentFilter.GALLERY_ONLY
+                                            FeedContentFilter.GALLERY_ONLY -> FeedContentFilter.POLLS_ONLY
+                                            FeedContentFilter.POLLS_ONLY -> FeedContentFilter.ALL
+                                        }
+                                        viewModel.setFeedContentFilter(next)
+                                    },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    val (icon, tint) = when (contentFilter) {
+                                        FeedContentFilter.ALL -> Icons.Outlined.Dashboard to MaterialTheme.colorScheme.onSurfaceVariant
+                                        FeedContentFilter.TEXT_ONLY -> Icons.AutoMirrored.Outlined.Article to MaterialTheme.colorScheme.primary
+                                        FeedContentFilter.GALLERY_ONLY -> Icons.Outlined.Photo to MaterialTheme.colorScheme.primary
+                                        FeedContentFilter.POLLS_ONLY -> Icons.Outlined.HowToVote to MaterialTheme.colorScheme.primary
+                                    }
+                                    Icon(icon, contentDescription = "Filter: ${contentFilter.name}", tint = tint, modifier = Modifier.size(22.dp))
+                                }
+                                Spacer(Modifier.width(4.dp))
                                 Box {
                                     Surface(
                                         onClick = { showFeedTypeDropdown = true },
@@ -802,28 +824,6 @@ fun FeedScreen(
                                         }
                                     )
                                 }
-                                }
-                                // Content type filter toggle — rotates through All → Notes → Gallery → Polls
-                                Spacer(Modifier.width(4.dp))
-                                IconButton(
-                                    onClick = {
-                                        val next = when (contentFilter) {
-                                            FeedContentFilter.ALL -> FeedContentFilter.TEXT_ONLY
-                                            FeedContentFilter.TEXT_ONLY -> FeedContentFilter.GALLERY_ONLY
-                                            FeedContentFilter.GALLERY_ONLY -> FeedContentFilter.POLLS_ONLY
-                                            FeedContentFilter.POLLS_ONLY -> FeedContentFilter.ALL
-                                        }
-                                        viewModel.setFeedContentFilter(next)
-                                    },
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    val (icon, tint) = when (contentFilter) {
-                                        FeedContentFilter.ALL -> Icons.Outlined.Dashboard to MaterialTheme.colorScheme.onSurfaceVariant
-                                        FeedContentFilter.TEXT_ONLY -> Icons.AutoMirrored.Outlined.Article to MaterialTheme.colorScheme.primary
-                                        FeedContentFilter.GALLERY_ONLY -> Icons.Outlined.Photo to MaterialTheme.colorScheme.primary
-                                        FeedContentFilter.POLLS_ONLY -> Icons.Outlined.HowToVote to MaterialTheme.colorScheme.primary
-                                    }
-                                    Icon(icon, contentDescription = "Filter: ${contentFilter.name}", tint = tint, modifier = Modifier.size(22.dp))
                                 }
                             }
                     },
