@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -203,7 +204,7 @@ fun GalleryCard(
     }
     val timestamp = remember(event.created_at) { formatGalleryTimestamp(event.created_at) }
 
-    var showFullScreenViewer by remember { mutableStateOf(false) }
+    var fullScreenInitialPage by remember { mutableIntStateOf(-1) }
     var fullScreenVideoUrl by remember { mutableStateOf<String?>(null) }
     var fullScreenVideoStartMs by remember { mutableStateOf(0L) }
 
@@ -436,14 +437,15 @@ fun GalleryCard(
                         .fillMaxWidth()
                         .aspectRatio(aspectRatio)
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable { showFullScreenViewer = true }
                 ) { page ->
                     val entry = imageEntries[page]
                     AsyncImage(
                         model = entry.url,
                         contentDescription = entry.alt ?: title,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { fullScreenInitialPage = page }
                     )
                 }
                 if (imageEntries.size > 1) {
@@ -526,13 +528,12 @@ fun GalleryCard(
     }
 
     // Full-screen gallery viewer (images)
-    if (showFullScreenViewer) {
+    if (fullScreenInitialPage >= 0) {
         FullScreenGalleryViewer(
             imageEntries = imageEntries,
-            videoEntries = emptyList(),
             caption = event.content.takeIf { it.isNotBlank() },
-            eventKind = event.kind,
-            onDismiss = { showFullScreenViewer = false }
+            initialPage = fullScreenInitialPage,
+            onDismiss = { fullScreenInitialPage = -1 }
         )
     }
 
@@ -549,11 +550,12 @@ fun GalleryCard(
 @Composable
 fun FullScreenGalleryViewer(
     imageEntries: List<Nip68.ImetaEntry>,
-    videoEntries: List<Nip71.VideoMeta>,
     caption: String?,
-    eventKind: Int,
+    initialPage: Int = 0,
     onDismiss: () -> Unit
 ) {
+    if (imageEntries.isEmpty()) return
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -561,6 +563,10 @@ fun FullScreenGalleryViewer(
         val context = LocalContext.current
         val clipboardManager = LocalClipboardManager.current
         val scope = rememberCoroutineScope()
+        val pagerState = rememberPagerState(
+            initialPage = initialPage.coerceIn(0, imageEntries.size - 1),
+            pageCount = { imageEntries.size }
+        )
 
         val buttonColors = IconButtonDefaults.iconButtonColors(
             containerColor = Color.Black.copy(alpha = 0.5f),
@@ -572,152 +578,94 @@ fun FullScreenGalleryViewer(
                 .fillMaxSize()
                 .background(Color.Black)
         ) {
-            if (imageEntries.isNotEmpty()) {
-                // Image pager with pinch-to-zoom
-                val pagerState = rememberPagerState(pageCount = { imageEntries.size })
+            // Swipeable image pager with pinch-to-zoom
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val entry = imageEntries[page]
+                var scale by remember { mutableFloatStateOf(1f) }
+                var offset by remember { mutableStateOf(Offset.Zero) }
 
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize()
-                ) { page ->
-                    val entry = imageEntries[page]
-                    var scale by remember { mutableFloatStateOf(1f) }
-                    var offset by remember { mutableStateOf(Offset.Zero) }
+                val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
+                    scale = (scale * zoomChange).coerceIn(0.5f, 5f)
+                    offset = if (scale > 1f) offset + panChange else Offset.Zero
+                }
 
-                    val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
-                        scale = (scale * zoomChange).coerceIn(0.5f, 5f)
-                        offset = if (scale > 1f) offset + panChange else Offset.Zero
-                    }
+                AsyncImage(
+                    model = entry.url,
+                    contentDescription = entry.alt ?: "Image ${page + 1} of ${imageEntries.size}",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offset.x,
+                            translationY = offset.y
+                        )
+                        .transformable(state = transformableState)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { if (scale <= 1f) onDismiss() }
+                        )
+                )
+            }
 
-                    AsyncImage(
-                        model = entry.url,
-                        contentDescription = entry.alt ?: "Gallery image",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer(
-                                scaleX = scale,
-                                scaleY = scale,
-                                translationX = offset.x,
-                                translationY = offset.y
-                            )
-                            .transformable(state = transformableState)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = { if (scale <= 1f) onDismiss() }
-                            )
+            // Page counter (e.g. "2 / 5")
+            if (imageEntries.size > 1) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Black.copy(alpha = 0.5f),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                ) {
+                    Text(
+                        text = "${pagerState.currentPage + 1} / ${imageEntries.size}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
 
                 // Page indicator dots
-                if (imageEntries.size > 1) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = if (caption != null) 60.dp else 16.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        repeat(imageEntries.size) { index ->
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 3.dp)
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (index == pagerState.currentPage)
-                                            Color.White
-                                        else
-                                            Color.White.copy(alpha = 0.4f)
-                                    )
-                            )
-                        }
-                    }
-                }
-
-                // Current image URL for download/copy
-                val currentUrl = imageEntries.getOrNull(pagerState.currentPage)?.url
-
-                // Top-right buttons
                 Row(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp)
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = if (caption != null) 60.dp else 16.dp),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    if (currentUrl != null) {
-                        IconButton(
-                            onClick = { scope.launch { MediaDownloader.downloadMedia(context, currentUrl) } },
-                            colors = buttonColors,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_download),
-                                contentDescription = "Download"
-                            )
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        IconButton(
-                            onClick = { clipboardManager.setText(AnnotatedString(currentUrl)) },
-                            colors = buttonColors,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy URL")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    IconButton(
-                        onClick = onDismiss,
-                        colors = buttonColors,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
-                    }
-                }
-            } else if (videoEntries.isNotEmpty()) {
-                // Video thumbnail with play overlay
-                val video = videoEntries[0]
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onDismiss
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (video.thumbnailUrl != null) {
-                        AsyncImage(
-                            model = video.thumbnailUrl,
-                            contentDescription = "Video thumbnail",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.5f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.PlayArrow,
-                            contentDescription = "Play video",
-                            tint = Color.White,
-                            modifier = Modifier.size(48.dp)
+                    repeat(imageEntries.size) { index ->
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 3.dp)
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (index == pagerState.currentPage)
+                                        Color.White
+                                    else
+                                        Color.White.copy(alpha = 0.4f)
+                                )
                         )
                     }
                 }
+            }
 
-                // Top-right buttons
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp)
-                ) {
+            // Current image URL for download/copy
+            val currentUrl = imageEntries.getOrNull(pagerState.currentPage)?.url
+
+            // Top-right buttons
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            ) {
+                if (currentUrl != null) {
                     IconButton(
-                        onClick = { scope.launch { MediaDownloader.downloadMedia(context, video.url) } },
+                        onClick = { scope.launch { MediaDownloader.downloadMedia(context, currentUrl) } },
                         colors = buttonColors,
                         modifier = Modifier.size(40.dp)
                     ) {
@@ -728,12 +676,20 @@ fun FullScreenGalleryViewer(
                     }
                     Spacer(Modifier.width(8.dp))
                     IconButton(
-                        onClick = onDismiss,
+                        onClick = { clipboardManager.setText(AnnotatedString(currentUrl)) },
                         colors = buttonColors,
                         modifier = Modifier.size(40.dp)
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy URL")
                     }
+                    Spacer(Modifier.width(8.dp))
+                }
+                IconButton(
+                    onClick = onDismiss,
+                    colors = buttonColors,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Close")
                 }
             }
 
