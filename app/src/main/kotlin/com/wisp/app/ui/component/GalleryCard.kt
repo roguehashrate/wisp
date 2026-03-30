@@ -234,58 +234,45 @@ fun GalleryCard(
                 }
             }
         } else if (event.kind == 20 && imageEntries.isNotEmpty()) {
-            // Picture event
-            if (imageEntries.size == 1) {
-                val entry = imageEntries[0]
-                val aspectRatio = parseAspectRatio(entry.dim) ?: (4f / 3f)
-                AsyncImage(
-                    model = entry.url,
-                    contentDescription = entry.alt ?: title,
-                    contentScale = ContentScale.Crop,
+            // Picture event — always use pager for swipe support
+            val firstDim = imageEntries.firstOrNull()?.dim
+            val aspectRatio = (parseAspectRatio(firstDim) ?: (4f / 3f)).coerceIn(0.5f, 2.5f)
+            val pagerState = rememberPagerState(pageCount = { imageEntries.size })
+            Column {
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(aspectRatio.coerceIn(0.5f, 2.5f))
+                        .aspectRatio(aspectRatio)
                         .clip(RoundedCornerShape(12.dp))
-                )
-            } else {
-                // Multi-image pager
-                val pagerState = rememberPagerState(pageCount = { imageEntries.size })
-                Column {
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(4f / 3f)
-                            .clip(RoundedCornerShape(12.dp))
-                    ) { page ->
-                        val entry = imageEntries[page]
-                        AsyncImage(
-                            model = entry.url,
-                            contentDescription = entry.alt ?: title,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                    if (imageEntries.size > 1) {
-                        Spacer(Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            repeat(imageEntries.size) { index ->
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 3.dp)
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (index == pagerState.currentPage)
-                                                MaterialTheme.colorScheme.primary
-                                            else
-                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                                        )
-                                )
-                            }
+                ) { page ->
+                    val entry = imageEntries[page]
+                    AsyncImage(
+                        model = entry.url,
+                        contentDescription = entry.alt ?: title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if (imageEntries.size > 1) {
+                    Spacer(Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        repeat(imageEntries.size) { index ->
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 3.dp)
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (index == pagerState.currentPage)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                                    )
+                            )
                         }
                     }
                 }

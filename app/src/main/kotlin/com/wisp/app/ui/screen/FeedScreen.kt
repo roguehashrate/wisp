@@ -115,7 +115,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import com.wisp.app.ui.theme.WispThemeColors
 import androidx.compose.material.icons.automirrored.outlined.Reply
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.outlined.CurrencyBitcoin
+import androidx.compose.material.icons.outlined.DynamicFeed
+import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Person
@@ -799,8 +802,27 @@ fun FeedScreen(
                         containerColor = MaterialTheme.colorScheme.surface
                     ),
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            ProfilePicture(url = userProfile?.picture, size = 32)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                ProfilePicture(url = userProfile?.picture, size = 32)
+                            }
+                            // Content type filter toggle — rotates through All → Notes → Gallery
+                            val contentFilter by viewModel.feedContentFilter.collectAsState()
+                            IconButton(onClick = {
+                                val next = when (contentFilter) {
+                                    FeedContentFilter.ALL -> FeedContentFilter.TEXT_ONLY
+                                    FeedContentFilter.TEXT_ONLY -> FeedContentFilter.GALLERY_ONLY
+                                    FeedContentFilter.GALLERY_ONLY -> FeedContentFilter.ALL
+                                }
+                                viewModel.setFeedContentFilter(next)
+                            }) {
+                                val (icon, tint) = when (contentFilter) {
+                                    FeedContentFilter.ALL -> Icons.Outlined.DynamicFeed to MaterialTheme.colorScheme.onSurfaceVariant
+                                    FeedContentFilter.TEXT_ONLY -> Icons.AutoMirrored.Outlined.Article to MaterialTheme.colorScheme.primary
+                                    FeedContentFilter.GALLERY_ONLY -> Icons.Outlined.Photo to MaterialTheme.colorScheme.primary
+                                }
+                                Icon(icon, contentDescription = "Filter: ${contentFilter.name}", tint = tint, modifier = Modifier.size(22.dp))
+                            }
                         }
                     },
                     actions = {
@@ -943,35 +965,6 @@ fun FeedScreen(
                     onTimeframeChange = { viewModel.setTrendingTimeframe(it) },
                     onModeChange = { viewModel.setTrendingMode(it) }
                 )
-            }
-            // Content type filter chips
-            if (feedType == FeedType.FOLLOWS || feedType == FeedType.EXTENDED_FOLLOWS) {
-                val contentFilter by viewModel.feedContentFilter.collectAsState()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = contentFilter == FeedContentFilter.ALL,
-                        onClick = { viewModel.setFeedContentFilter(FeedContentFilter.ALL) },
-                        label = { Text(stringResource(R.string.filter_all)) },
-                        colors = FilterChipDefaults.filterChipColors()
-                    )
-                    FilterChip(
-                        selected = contentFilter == FeedContentFilter.TEXT_ONLY,
-                        onClick = { viewModel.setFeedContentFilter(FeedContentFilter.TEXT_ONLY) },
-                        label = { Text(stringResource(R.string.tab_notes)) },
-                        colors = FilterChipDefaults.filterChipColors()
-                    )
-                    FilterChip(
-                        selected = contentFilter == FeedContentFilter.GALLERY_ONLY,
-                        onClick = { viewModel.setFeedContentFilter(FeedContentFilter.GALLERY_ONLY) },
-                        label = { Text(stringResource(R.string.profile_tab_gallery)) },
-                        colors = FilterChipDefaults.filterChipColors()
-                    )
-                }
             }
             Box(
                 modifier = Modifier.fillMaxSize()

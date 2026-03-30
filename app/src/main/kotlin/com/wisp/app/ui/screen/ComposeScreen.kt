@@ -99,7 +99,13 @@ import com.wisp.app.viewmodel.ComposeViewModel
 import com.wisp.app.viewmodel.PowManager
 import com.wisp.app.viewmodel.PowStatus
 import com.wisp.app.repo.PowPreferences
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -109,6 +115,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.DatePicker
@@ -197,6 +204,7 @@ fun ComposeScreen(
                 title = {
                     Text(
                         when {
+                            galleryMode -> stringResource(R.string.compose_gallery_mode)
                             quoteTo != null -> stringResource(R.string.compose_quote)
                             replyTo != null -> stringResource(R.string.compose_reply)
                             else -> stringResource(R.string.compose_new_post)
@@ -346,6 +354,22 @@ fun ComposeScreen(
                     }
                 }
 
+                // Gallery compose mode — upload-first layout
+                if (galleryMode) {
+                    GalleryComposeSection(
+                        uploadedUrls = uploadedUrls,
+                        uploadProgress = uploadProgress,
+                        countdownSeconds = countdownSeconds,
+                        onPickMedia = {
+                            photoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                            )
+                        },
+                        onRemoveUrl = { viewModel.removeMediaUrl(it) }
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
+
                 // Text field with GIF keyboard support via BasicTextField(TextFieldState)
                 val textFieldState = remember { TextFieldState(content.text) }
                 val interactionSource = remember { MutableInteractionSource() }
@@ -377,7 +401,7 @@ fun ComposeScreen(
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp)
+                        .height(if (galleryMode) 100.dp else 160.dp)
                         .contentReceiver(object : ReceiveContentListener {
                             override fun onReceive(
                                 transferableContent: TransferableContent
@@ -409,7 +433,7 @@ fun ComposeScreen(
                             singleLine = false,
                             visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
                             interactionSource = interactionSource,
-                            label = { Text(stringResource(R.string.compose_placeholder)) }
+                            label = { Text(stringResource(if (galleryMode) R.string.compose_gallery_placeholder else R.string.compose_placeholder)) }
                         )
                     }
                 )
@@ -451,7 +475,7 @@ fun ComposeScreen(
 
                     IconButton(onClick = { viewModel.toggleGalleryMode() }) {
                         Icon(
-                            Icons.Outlined.Image,
+                            Icons.Outlined.PhotoLibrary,
                             contentDescription = stringResource(R.string.profile_tab_gallery),
                             tint = if (galleryMode) MaterialTheme.colorScheme.primary
                                    else MaterialTheme.colorScheme.onSurfaceVariant
@@ -962,6 +986,161 @@ private fun MentionCandidateRow(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun GalleryComposeSection(
+    uploadedUrls: List<String>,
+    uploadProgress: String?,
+    countdownSeconds: Int?,
+    onPickMedia: () -> Unit,
+    onRemoveUrl: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (uploadedUrls.isEmpty()) {
+            // Empty state — prominent upload area
+            Surface(
+                onClick = onPickMedia,
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(4f / 3f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (uploadProgress != null) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(36.dp),
+                                strokeWidth = 3.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                uploadProgress,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                Icons.Outlined.Image,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Tap to add photos or videos",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            // Image pager with uploaded media
+            val pagerState = rememberPagerState(pageCount = { uploadedUrls.size })
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(4f / 3f)
+                    .clip(RoundedCornerShape(16.dp))
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        AsyncImage(
+                            model = uploadedUrls[page],
+                            contentDescription = "Uploaded media ${page + 1}",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        // Remove button
+                        IconButton(
+                            onClick = { onRemoveUrl(uploadedUrls[page]) },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.5f))
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Remove",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+                // Page indicator dots
+                if (uploadedUrls.size > 1) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 10.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        repeat(uploadedUrls.size) { index ->
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 3.dp)
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (index == pagerState.currentPage)
+                                            Color.White
+                                        else
+                                            Color.White.copy(alpha = 0.4f)
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            // Add more / uploading indicator
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onPickMedia,
+                    enabled = uploadProgress == null && countdownSeconds == null,
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Icon(Icons.Outlined.Image, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Add more", style = MaterialTheme.typography.labelMedium)
+                }
+                if (uploadProgress != null) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        uploadProgress,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Text(
+                        "${uploadedUrls.size} ${if (uploadedUrls.size == 1) "item" else "items"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

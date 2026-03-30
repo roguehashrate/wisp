@@ -152,7 +152,7 @@ class UserProfileViewModel(app: Application) : AndroidViewModel(app) {
     private var latestRelayListTimestamp: Long = 0
 
     companion object {
-        private val SUB_IDS = setOf("userprofile", "userposts", "userfollows", "userrelays", "userpins", "usergroups", "followprofiles")
+        private val SUB_IDS = setOf("userprofile", "userposts", "usergallery", "userfollows", "userrelays", "userpins", "usergroups", "followprofiles")
     }
 
     fun loadProfile(
@@ -216,6 +216,8 @@ class UserProfileViewModel(app: Application) : AndroidViewModel(app) {
         // Request fresh profile, posts, follow list, and relay list
         val profileFilter = Filter(kinds = listOf(0), authors = listOf(pubkey), limit = 1)
         val postsFilter = Filter(kinds = listOf(1, 6, 1068, 30023, 20, 21, 22), authors = listOf(pubkey), limit = 50)
+        // Gallery posts can be old and curated — fetch separately with no since filter, higher limit
+        val galleryFilter = Filter(kinds = listOf(20, 21, 22), authors = listOf(pubkey), limit = 100)
         val followFilter = Filter(kinds = listOf(3), authors = listOf(pubkey), limit = 1)
         val relayFilter = Filter(kinds = listOf(10002), authors = listOf(pubkey), limit = 1)
         val pinFilter = Filter(kinds = listOf(10001), authors = listOf(pubkey), limit = 1)
@@ -224,6 +226,7 @@ class UserProfileViewModel(app: Application) : AndroidViewModel(app) {
         if (outboxRouter != null) {
             outboxRouter.subscribeToUserWriteRelays("userprofile", pubkey, profileFilter)
             outboxRouter.subscribeToUserWriteRelays("userposts", pubkey, postsFilter)
+            outboxRouter.subscribeToUserWriteRelays("usergallery", pubkey, galleryFilter)
             outboxRouter.subscribeToUserWriteRelays("userfollows", pubkey, followFilter)
             outboxRouter.subscribeToUserWriteRelays("userrelays", pubkey, relayFilter)
             outboxRouter.subscribeToUserWriteRelays("userpins", pubkey, pinFilter)
@@ -231,6 +234,7 @@ class UserProfileViewModel(app: Application) : AndroidViewModel(app) {
         } else {
             relayPool.sendToAll(ClientMessage.req("userprofile", profileFilter))
             relayPool.sendToAll(ClientMessage.req("userposts", postsFilter))
+            relayPool.sendToAll(ClientMessage.req("usergallery", galleryFilter))
             relayPool.sendToAll(ClientMessage.req("userfollows", followFilter))
             relayPool.sendToAll(ClientMessage.req("userrelays", relayFilter))
             relayPool.sendToAll(ClientMessage.req("userpins", pinFilter))
@@ -239,6 +243,7 @@ class UserProfileViewModel(app: Application) : AndroidViewModel(app) {
         // Also query top scored relays as safety net
         for (url in topRelayUrls) {
             relayPool.sendToRelayOrEphemeral(url, ClientMessage.req("userposts", postsFilter))
+            relayPool.sendToRelayOrEphemeral(url, ClientMessage.req("usergallery", galleryFilter))
             relayPool.sendToRelayOrEphemeral(url, ClientMessage.req("userprofile", profileFilter))
             relayPool.sendToRelayOrEphemeral(url, ClientMessage.req("userfollows", followFilter))
         }
