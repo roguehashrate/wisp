@@ -905,7 +905,7 @@ private fun GroupMessageBubble(
             // Per-emoji reaction badges
             if (message.reactions.isNotEmpty()) {
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.padding(top = 4.dp)
                 ) {
                     message.reactions.forEach { (emoji, reactors) ->
@@ -913,30 +913,43 @@ private fun GroupMessageBubble(
                         val shortcode = if (emoji.startsWith(":") && emoji.endsWith(":")) emoji.removeSurrounding(":") else null
                         val emojiUrl = shortcode?.let { reactionEmojiUrls[it] ?: resolvedEmojis[it] }
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(14.dp),
                             color = if (isMe) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                                     else MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier.clickable { onReact(message.id, message.senderPubkey, emoji) }
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 if (emojiUrl != null) {
                                     AsyncImage(
                                         model = emojiUrl,
                                         contentDescription = emoji,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 } else {
-                                    Text(text = emoji, fontSize = 14.sp)
+                                    Text(text = emoji, fontSize = 16.sp)
                                 }
-                                Spacer(Modifier.width(3.dp))
-                                Text(
-                                    text = reactors.size.toString(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontSize = 11.sp
-                                )
+                                Spacer(Modifier.width(4.dp))
+                                // Stacked reactor avatars
+                                val displayReactors = reactors.take(3)
+                                displayReactors.forEachIndexed { i, pubkey ->
+                                    val reactorProfile = remember(pubkey) { eventRepo.getProfileData(pubkey) }
+                                    ProfilePicture(
+                                        url = reactorProfile?.picture,
+                                        size = 16,
+                                        modifier = if (i > 0) Modifier.offset(x = (i * -4).dp) else Modifier
+                                    )
+                                }
+                                if (reactors.size > 3) {
+                                    Text(
+                                        text = "+${reactors.size - 3}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.offset(x = (displayReactors.size * -4).dp)
+                                    )
+                                }
                             }
                         }
                     }
