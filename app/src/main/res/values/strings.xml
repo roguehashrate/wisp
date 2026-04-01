@@ -466,7 +466,7 @@
     <string name="settings_large_text">Large text</string>
     <string name="settings_increase_text_size">Increase text size across the app</string>
     <string name="settings_language">Language</string>
-    <string name="settings_popular_themes">Popular Themes</string>
+    <string name="settings_popular_themes">Themes</string>
     <string name="settings_choose_color_scheme">Choose a color scheme</string>
     <string name="settings_accent_color">Accent Color</string>
     <string name="settings_preview">Preview</string>
