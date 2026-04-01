@@ -18,6 +18,7 @@ import com.wisp.app.repo.GroupMessage
 import com.wisp.app.repo.GroupPreview
 import com.wisp.app.repo.GroupRepository
 import com.wisp.app.repo.GroupRoom
+import com.wisp.app.repo.NotificationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +33,8 @@ class GroupListViewModel(app: Application) : AndroidViewModel(app) {
     private var groupRepo: GroupRepository? = null
     private var relayPool: RelayPool? = null
     private var eventRepo: EventRepository? = null
+    private var notifRepo: NotificationRepository? = null
+    private var myPubkey: String? = null
 
     /** Groups that currently have an open relay connection and active subscriptions. */
     private val subscribedGroups = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
@@ -64,6 +67,8 @@ class GroupListViewModel(app: Application) : AndroidViewModel(app) {
         groupRepo = null
         relayPool = null
         eventRepo = null
+        notifRepo = null
+        myPubkey = null
     }
 
     val unreadGroups: StateFlow<Set<String>>
@@ -72,11 +77,14 @@ class GroupListViewModel(app: Application) : AndroidViewModel(app) {
     val notifiedGroups: StateFlow<Set<String>>
         get() = groupRepo?.notifiedGroups ?: MutableStateFlow(emptySet())
 
-    fun init(repository: GroupRepository, pool: RelayPool, evRepo: EventRepository? = null) {
+    fun init(repository: GroupRepository, pool: RelayPool, evRepo: EventRepository? = null,
+             nRepo: NotificationRepository? = null, pubkey: String? = null) {
         if (groupRepo != null) return
         groupRepo = repository
         relayPool = pool
         eventRepo = evRepo
+        notifRepo = nRepo
+        myPubkey = pubkey
         collectRelayEvents()
         // Auto-subscribe to groups with notifications enabled so messages arrive in the background
         for ((relayUrl, groupId) in repository.getNotifiedGroupKeys()) {
@@ -219,6 +227,16 @@ class GroupListViewModel(app: Application) : AndroidViewModel(app) {
                             replyToId = replyToId,
                             emojiTags = Nip30.parseEmojiTags(event)
                         ))
+                        // Route reply notifications: if this is a reply (q-tag) to one of our
+                        // messages, feed it to NotificationRepository so it shows in notifications.
+                        val pk = myPubkey
+                        val nr = notifRepo
+                        if (pk != null && nr != null && event.pubkey != pk && replyToId != null) {
+                            val hasPTag = event.tags.any { it.size >= 2 && it[0] == "p" && it[1] == pk }
+                            if (hasPTag) {
+                                nr.addGroupChatReply(event, pk, replyToId, groupId)
+                            }
+                        }
                     }
                     7 -> {
                         val messageId = event.tags.firstOrNull { it.size >= 2 && it[0] == "e" }?.get(1)
