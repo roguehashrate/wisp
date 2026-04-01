@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -63,6 +64,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -70,6 +72,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -173,14 +176,53 @@ fun ZapDialog(
 
                     Spacer(Modifier.height(4.dp))
 
-                    // Amount display
-                    if (effectiveAmount > 0) {
+                    // Amount display — tap to edit directly
+                    if (isCustom) {
+                        BasicTextField(
+                            value = customAmount,
+                            onValueChange = { customAmount = it.filter { c -> c.isDigit() } },
+                            textStyle = MaterialTheme.typography.displaySmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = LightningOrange,
+                                textAlign = TextAlign.Center
+                            ),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            cursorBrush = SolidColor(LightningOrange),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            decorationBox = { inner ->
+                                Box(contentAlignment = Alignment.Center) {
+                                    if (customAmount.isEmpty()) {
+                                        Text(
+                                            text = "0",
+                                            style = MaterialTheme.typography.displaySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = LightningOrange.copy(alpha = 0.3f)
+                                        )
+                                    }
+                                    inner()
+                                }
+                            }
+                        )
+                        Text(
+                            text = stringResource(R.string.zap_sats),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = LightningOrange.copy(alpha = 0.7f)
+                        )
+                    } else if (effectiveAmount > 0) {
                         Text(
                             text = formatDisplayAmount(effectiveAmount),
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
                             color = LightningOrange,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            modifier = Modifier
+                                .clickable {
+                                    customAmount = effectiveAmount.toString()
+                                    isCustom = true
+                                }
+                                .padding(vertical = 4.dp)
                         )
                         Text(
                             text = stringResource(R.string.zap_sats),
