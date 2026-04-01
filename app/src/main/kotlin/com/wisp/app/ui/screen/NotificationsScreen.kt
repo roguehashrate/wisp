@@ -77,6 +77,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -699,6 +700,39 @@ private fun ZenNotificationRow(
                     onMentionClear = onMentionClear,
                     resolveDisplayName = resolveDisplayName
                 )
+            } else if (item.groupChatId != null && onGroupNotificationClick != null) {
+                // Group chat notifications (reactions, zaps, replies) — shown with group badge
+                val resolveId = if (item.type == NotificationType.REPLY) item.replyEventId ?: item.referencedEventId
+                    else item.referencedEventId
+                val (msgContent, grpName, emojiTags) = remember(item.groupChatId, resolveId) {
+                    resolveGroupMessage?.invoke(item.groupChatId, resolveId)
+                        ?: Triple(null, null, emptyMap())
+                }
+                // For replies, also resolve the quoted original message (our message being replied to)
+                val quotedContent = if (item.type == NotificationType.REPLY && item.replyEventId != null) {
+                    remember(item.groupChatId, item.referencedEventId) {
+                        resolveGroupMessage?.invoke(item.groupChatId, item.referencedEventId)?.first
+                    }
+                } else null
+                val quotedAuthorName = if (quotedContent != null) {
+                    remember(userPubkey) {
+                        userPubkey?.let { eventRepo?.getProfileData(it)?.displayString }
+                    }
+                } else null
+                GroupChatExpansion(
+                    item = item,
+                    eventRepo = eventRepo,
+                    groupName = grpName,
+                    messageContent = msgContent,
+                    quotedContent = quotedContent,
+                    quotedAuthorName = quotedAuthorName,
+                    emojiMap = resolvedEmojis + emojiTags,
+                    onProfileClick = onProfileClick,
+                    onClick = {
+                        val scrollTarget = item.replyEventId ?: item.referencedEventId
+                        onGroupNotificationClick(item.groupChatId, scrollTarget)
+                    }
+                )
             } else if (item.type == NotificationType.REPLY) {
                 ReplyExpansion(
                     item = item,
@@ -722,20 +756,6 @@ private fun ZenNotificationRow(
                 )
             } else if (item.type == NotificationType.DM_ZAP || item.type == NotificationType.PROFILE_ZAP) {
                 ZapMessageExpansion(item = item)
-            } else if (item.groupChatId != null && onGroupNotificationClick != null) {
-                val (msgContent, grpName, emojiTags) = remember(item.groupChatId, item.referencedEventId) {
-                    resolveGroupMessage?.invoke(item.groupChatId, item.referencedEventId)
-                        ?: Triple(null, null, emptyMap())
-                }
-                GroupChatExpansion(
-                    item = item,
-                    eventRepo = eventRepo,
-                    groupName = grpName,
-                    messageContent = msgContent,
-                    emojiMap = resolvedEmojis + emojiTags,
-                    onProfileClick = onProfileClick,
-                    onClick = { onGroupNotificationClick(item.groupChatId, item.referencedEventId) }
-                )
             } else if (postCardParams != null && item.type != NotificationType.DM_REACTION) {
                 NoteExpansion(
                     item = item,
@@ -774,6 +794,8 @@ private fun GroupChatExpansion(
     eventRepo: EventRepository?,
     groupName: String?,
     messageContent: String?,
+    quotedContent: String? = null,
+    quotedAuthorName: String? = null,
     emojiMap: Map<String, String> = emptyMap(),
     onProfileClick: (String) -> Unit,
     onClick: () -> Unit
@@ -811,25 +833,62 @@ private fun GroupChatExpansion(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
-            if (messageContent != null) {
-                com.wisp.app.ui.component.RichContent(
-                    content = messageContent,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    emojiMap = emojiMap,
-                    eventRepo = eventRepo,
-                    onProfileClick = onProfileClick,
-                    onNoteClick = {},
-                    modifier = Modifier.padding(12.dp)
-                )
-            } else {
-                Text(
-                    text = "Message not available",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                    modifier = Modifier.padding(12.dp)
-                )
+            Column(modifier = Modifier.padding(12.dp)) {
+                // For replies: show the quoted original message (our message) first
+                if (quotedContent != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(36.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    RoundedCornerShape(2.dp)
+                                )
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = quotedAuthorName ?: "You",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = quotedContent,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                if (messageContent != null) {
+                    com.wisp.app.ui.component.RichContent(
+                        content = messageContent,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        emojiMap = emojiMap,
+                        eventRepo = eventRepo,
+                        onProfileClick = onProfileClick,
+                        onNoteClick = {}
+                    )
+                } else {
+                    Text(
+                        text = "Message not available",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    )
+                }
             }
         }
     }

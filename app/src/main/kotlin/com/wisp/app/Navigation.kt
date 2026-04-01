@@ -380,7 +380,8 @@ fun WispNavHost(
     // Initialize group list viewmodel with shared repo; key changes on account switch to re-init
     LaunchedEffect(groupListInitKey) {
         feedViewModel.onGroupReconnect = { groupListViewModel.resubscribeNotifiedGroups() }
-        groupListViewModel.init(feedViewModel.groupRepo, feedViewModel.relayPool, feedViewModel.eventRepo)
+        groupListViewModel.init(feedViewModel.groupRepo, feedViewModel.relayPool, feedViewModel.eventRepo,
+            feedViewModel.notifRepo, feedViewModel.getUserPubkey())
     }
 
     // Initialize notifications viewmodel with shared repos

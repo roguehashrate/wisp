@@ -75,6 +75,59 @@ class NotificationRepository(
 
     fun getLatestNotifTimestamp(): Long? = if (latestNotifTs > 0) latestNotifTs else null
 
+    /**
+     * Add a group chat reply (kind 9) as a reply notification.
+     * Called from GroupListViewModel when a kind 9 message with a q-tag reply targets one of our messages.
+     */
+    fun addGroupChatReply(event: NostrEvent, myPubkey: String, replyToId: String, groupId: String) {
+        if (event.pubkey == myPubkey) return
+        if (muteRepo?.isBlocked(event.pubkey) == true) return
+        synchronized(lock) {
+            if (seenEvents.get(event.id) != null) return
+            seenEvents.put(event.id, true)
+            if (event.created_at > latestNotifTs) {
+                latestNotifTs = event.created_at
+                prefs.edit().putLong(KEY_LATEST_NOTIF_TS, event.created_at).apply()
+            }
+
+            val key = "reply:${event.id}"
+            groupMap[key] = NotificationGroup.ReplyNotification(
+                groupId = key,
+                senderPubkey = event.pubkey,
+                replyEventId = event.id,
+                referencedEventId = replyToId,
+                referencedEventHints = emptyList(),
+                latestTimestamp = event.created_at
+            )
+
+            val flatReplyId = "reply:${event.id}"
+            if (flatItemIds.add(flatReplyId)) {
+                flatItems.add(FlatNotificationItem(
+                    id = flatReplyId,
+                    type = NotificationType.REPLY,
+                    actorPubkey = event.pubkey,
+                    referencedEventId = replyToId,
+                    timestamp = event.created_at,
+                    replyEventId = event.id,
+                    groupChatId = groupId
+                ))
+            }
+
+            if (event.created_at > lastReadTimestamp) {
+                if (isViewing) {
+                    lastReadTimestamp = event.created_at
+                    prefs.edit().putLong(KEY_LAST_READ, event.created_at).apply()
+                } else {
+                    _hasUnread.value = true
+                }
+                if (event.created_at >= soundEligibleAfter && appIsActive) {
+                    _replyReceived.tryEmit(Unit)
+                }
+            }
+            rebuildSortedList()
+        }
+    }
+
     fun addEvent(event: NostrEvent, myPubkey: String, replyToMyEvent: Boolean = false, source: String = "") {
         if (event.pubkey == myPubkey) return
         // Defense-in-depth: reject events from blocked users even if the caller forgot to check.
