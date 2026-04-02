@@ -34,6 +34,7 @@ import com.wisp.app.repo.InterestRepository
 import com.wisp.app.repo.ListRepository
 import com.wisp.app.repo.MetadataFetcher
 import com.wisp.app.repo.DeletedEventsRepository
+import com.wisp.app.repo.LiveStreamRepository
 import com.wisp.app.repo.MuteRepository
 import com.wisp.app.repo.NotificationRepository
 import com.wisp.app.repo.PinRepository
@@ -68,6 +69,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -183,6 +185,7 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
     val listRepo = ListRepository(app, pubkeyHex)
     val dmRepo = DmRepository(app, pubkeyHex)
     val groupRepo = GroupRepository(app, pubkeyHex)
+    val liveStreamRepo = LiveStreamRepository()
     val notifRepo = NotificationRepository(app, pubkeyHex, muteRepo, eventRepo)
     val relayListRepo = RelayListRepository(app)
     val bookmarkRepo = BookmarkRepository(app, pubkeyHex)
@@ -270,7 +273,7 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
     val eventRouter: EventRouter = EventRouter(
         relayPool, eventRepo, contactRepo, muteRepo, notifRepo, listRepo, bookmarkRepo,
         bookmarkSetRepo, pinRepo, blossomRepo, customEmojiRepo, relayListRepo, interestRepo, relaySetRepo,
-        relayScoreBoard, relayHintStore, keyRepo, dmRepo, extendedNetworkRepo, groupRepo, metadataFetcher,
+        relayScoreBoard, relayHintStore, keyRepo, dmRepo, extendedNetworkRepo, groupRepo, liveStreamRepo, metadataFetcher,
         getUserPubkey = { getUserPubkey() },
         getSigner = { signer },
         getFeedSubId = { feedSub.feedSubId },
@@ -298,7 +301,7 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
         listRepo, bookmarkRepo, bookmarkSetRepo, relaySetRepo, pinRepo, blossomRepo, interestRepo, customEmojiRepo,
         relayListRepo, relayScoreBoard, relayHintStore, healthTracker, keyRepo,
         extendedNetworkRepo, metadataFetcher, profileRepo, relayInfoRepo, nip05Repo,
-        nwcRepo, sparkRepo, walletModeRepo, dmRepo, zapPrefs, lifecycleManager, eventRouter, feedSub,
+        nwcRepo, sparkRepo, walletModeRepo, dmRepo, liveStreamRepo, zapPrefs, lifecycleManager, eventRouter, feedSub,
         viewModelScope, processingDispatcher, pubkeyHex,
         getUserPubkey = { getUserPubkey() },
         registerAuthSigner = { registerAuthSigner() },
@@ -340,6 +343,15 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
     ) { type, main, relay ->
         if (type == FeedType.RELAY || type == FeedType.TRENDING) relay else main
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val liveNowStreams: StateFlow<List<com.wisp.app.repo.LiveStream>> = liveStreamRepo.liveStreams
+        .map { streams ->
+            streams.values
+                .filter { it.chatters.isNotEmpty() }
+                .sortedByDescending { it.chatters.size }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val newNoteCount: StateFlow<Int> = eventRepo.newNoteCount
 
     // -- New notes button visibility --
@@ -398,6 +410,7 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
     fun resetForAccountSwitch() {
         startup.resetForAccountSwitch()
         groupRepo.clear()
+        liveStreamRepo.clear()
     }
     fun reloadForNewAccount() {
         startup.reloadForNewAccount()

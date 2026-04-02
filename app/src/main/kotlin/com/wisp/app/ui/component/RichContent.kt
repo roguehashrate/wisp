@@ -153,6 +153,7 @@ data class NoteActions(
     val onArticleClick: ((Int, String, String) -> Unit)? = null,
     val onPayInvoice: (suspend (String) -> Boolean)? = null,
     val onGroupRoom: ((String, String) -> Unit)? = null,
+    val onLiveStreamClick: ((hostPubkey: String, dTag: String, relayHint: String?) -> Unit)? = null,
     val groupMetadataProvider: ((String, String) -> Nip29.GroupMetadata?)? = null,
     val fetchGroupPreview: (suspend (String, String) -> GroupPreview?)? = null,
     val onAddEmojiSet: ((pubkey: String, dTag: String) -> Unit)? = null,
@@ -556,6 +557,7 @@ fun RichContent(
     onProfileClick: ((String) -> Unit)? = null,
     onNoteClick: ((String) -> Unit)? = null,
     onHashtagClick: ((String) -> Unit)? = null,
+    onLiveStreamClick: ((String, String, String?) -> Unit)? = null,
     noteActions: NoteActions? = null,
     modifier: Modifier = Modifier
 ) {
@@ -848,7 +850,9 @@ fun RichContent(
                                         author = segment.author,
                                         relayHints = segment.relays,
                                         eventRepo = eventRepo,
-                                        onProfileClick = onProfileClick
+                                        onProfileClick = onProfileClick,
+                                        onLiveStreamClick = onLiveStreamClick ?: noteActions?.onLiveStreamClick,
+                                        segmentRelayHints = segment.relays
                                     )
                                 } else {
                                     UnsupportedKindBadge(kind = kind, style = style)
@@ -1357,7 +1361,9 @@ private fun LiveStreamCard(
     author: String,
     relayHints: List<String>,
     eventRepo: EventRepository,
-    onProfileClick: ((String) -> Unit)?
+    onProfileClick: ((String) -> Unit)?,
+    onLiveStreamClick: ((String, String, String?) -> Unit)? = null,
+    segmentRelayHints: List<String> = emptyList()
 ) {
     val version by eventRepo.quotedEventVersion.collectAsState()
     val event = remember(author, dTag, version) {
@@ -1384,7 +1390,29 @@ private fun LiveStreamCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
+            .then(
+                if (onLiveStreamClick != null) Modifier.clickable {
+                    onLiveStreamClick(author, dTag, segmentRelayHints.firstOrNull())
+                }
+                else Modifier
+            )
     ) {
+        LiveStreamCardContent(event, streamUrl, image, title, summary, status, profile, author, onProfileClick)
+    }
+}
+
+@Composable
+private fun LiveStreamCardContent(
+    event: NostrEvent?,
+    streamUrl: String?,
+    image: String?,
+    title: String?,
+    summary: String?,
+    status: String?,
+    profile: com.wisp.app.nostr.ProfileData?,
+    author: String,
+    onProfileClick: ((String) -> Unit)?
+) {
         if (event == null) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -1492,7 +1520,6 @@ private fun LiveStreamCard(
                 }
             }
         }
-    }
 }
 
 @Composable

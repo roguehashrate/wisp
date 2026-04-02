@@ -78,6 +78,7 @@ import com.wisp.app.ui.screen.BookmarksScreen
 import com.wisp.app.ui.screen.HashtagFeedScreen
 import com.wisp.app.ui.screen.KeysScreen
 import com.wisp.app.ui.screen.ListScreen
+import com.wisp.app.ui.screen.LiveStreamScreen
 import com.wisp.app.ui.screen.ExistingUserOnboardingScreen
 import com.wisp.app.ui.screen.LoadingScreen
 import com.wisp.app.ui.screen.ListsHubScreen
@@ -111,6 +112,7 @@ import com.wisp.app.viewmodel.HashtagFeedViewModel
 import com.wisp.app.viewmodel.OnboardingViewModel
 import com.wisp.app.viewmodel.PowStatus
 import com.wisp.app.viewmodel.SplashViewModel
+import com.wisp.app.viewmodel.LiveStreamViewModel
 import com.wisp.app.viewmodel.WalletViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -155,6 +157,7 @@ object Routes {
     const val INTERFACE_SETTINGS = "interface_settings"
     const val RELAY_HEALTH = "relay_health"
     const val ARTICLE = "article/{kind}/{author}/{dTag}"
+    const val LIVE_STREAM = "live_stream/{hostPubkey}/{dTag}?relayHint={relayHint}"
 }
 
 @Composable
@@ -424,7 +427,7 @@ fun WispNavHost(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val nonAppRoutes = setOf(Routes.SPLASH, Routes.AUTH, Routes.LOADING, Routes.ONBOARDING_PROFILE, Routes.ONBOARDING_SUGGESTIONS, Routes.EXISTING_USER_ONBOARDING)
-    val hideBottomBarRoutes = nonAppRoutes + Routes.DM_CONVERSATION + Routes.DM_CONVERSATION_GROUP + Routes.CONTACT_PICKER + Routes.GROUP_ROOM + Routes.GROUP_DETAIL
+    val hideBottomBarRoutes = nonAppRoutes + Routes.DM_CONVERSATION + Routes.DM_CONVERSATION_GROUP + Routes.CONTACT_PICKER + Routes.GROUP_ROOM + Routes.GROUP_DETAIL + Routes.LIVE_STREAM
     val socialGraphDiscoveryState by feedViewModel.extendedNetworkRepo.discoveryState.collectAsState()
     val socialGraphComputing = currentRoute == Routes.SOCIAL_GRAPH && (
         socialGraphDiscoveryState is com.wisp.app.repo.DiscoveryState.FetchingFollowLists ||
@@ -892,6 +895,13 @@ fun WispNavHost(
                     )
                     navController.navigate("group_room/$encoded/${android.net.Uri.encode(groupId)}")
                 },
+                onLiveStreamClick = { hostPubkey, dTag, relayHint ->
+                    val route = buildString {
+                        append("live_stream/$hostPubkey/${android.net.Uri.encode(dTag)}")
+                        if (relayHint != null) append("?relayHint=${android.net.Uri.encode(relayHint)}")
+                    }
+                    navController.navigate(route)
+                },
                 fetchGroupPreview = { relayUrl, groupId ->
                     groupListViewModel.fetchGroupPreview(relayUrl, groupId)
                 }
@@ -1139,6 +1149,13 @@ fun WispNavHost(
                 onGroupRoom = { relayUrl, groupId ->
                     val encodedRelay = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(relayUrl.toByteArray())
                     navController.navigate("group_room/$encodedRelay/${android.net.Uri.encode(groupId)}")
+                },
+                onLiveStreamClick = { hostPubkey, dTag, relayHint ->
+                    val route = buildString {
+                        append("live_stream/$hostPubkey/${android.net.Uri.encode(dTag)}")
+                        if (relayHint != null) append("?relayHint=${android.net.Uri.encode(relayHint)}")
+                    }
+                    navController.navigate(route)
                 },
                 fetchGroupPreview = { relayUrl, groupId -> groupListViewModel.fetchGroupPreview(relayUrl, groupId) },
                 onAddEmojiSet = { pk, dTag -> feedViewModel.addSetToEmojiList(pk, dTag) },
@@ -1845,6 +1862,13 @@ fun WispNavHost(
                     val encodedRelay = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(relayUrl.toByteArray())
                     navController.navigate("group_room/$encodedRelay/${android.net.Uri.encode(groupId)}")
                 },
+                onLiveStreamClick = { hostPubkey, dTag, relayHint ->
+                    val route = buildString {
+                        append("live_stream/$hostPubkey/${android.net.Uri.encode(dTag)}")
+                        if (relayHint != null) append("?relayHint=${android.net.Uri.encode(relayHint)}")
+                    }
+                    navController.navigate(route)
+                },
                 fetchGroupPreview = { relayUrl, groupId -> groupListViewModel.fetchGroupPreview(relayUrl, groupId) },
                 onAddEmojiSet = { pubkey, dTag -> feedViewModel.addSetToEmojiList(pubkey, dTag) },
                 onRemoveEmojiSet = { pubkey, dTag -> feedViewModel.removeSetFromEmojiList(pubkey, dTag) },
@@ -2326,6 +2350,93 @@ fun WispNavHost(
                     onDismiss = { showArticleEmojiLibrary = false }
                 )
             }
+        }
+
+        composable(
+            Routes.LIVE_STREAM,
+            arguments = listOf(
+                navArgument("hostPubkey") { type = NavType.StringType },
+                navArgument("dTag") { type = NavType.StringType },
+                navArgument("relayHint") { type = NavType.StringType; nullable = true; defaultValue = null }
+            )
+        ) { backStackEntry ->
+            val hostPubkey = backStackEntry.arguments?.getString("hostPubkey") ?: return@composable
+            val dTag = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("dTag") ?: return@composable, "UTF-8"
+            )
+            val relayHint = backStackEntry.arguments?.getString("relayHint")?.let {
+                java.net.URLDecoder.decode(it, "UTF-8")
+            }
+            val naddrHints = listOfNotNull(relayHint)
+            val liveStreamViewModel: LiveStreamViewModel = viewModel()
+            LaunchedEffect(hostPubkey, dTag) {
+                liveStreamViewModel.init(
+                    hostPubkey, dTag, feedViewModel.liveStreamRepo,
+                    feedViewModel.relayPool, feedViewModel.relayListRepo,
+                    feedViewModel.outboxRouter, feedViewModel.subManager,
+                    feedViewModel.contactRepo, naddrHints
+                )
+            }
+            DisposableEffect(hostPubkey, dTag) {
+                onDispose { liveStreamViewModel.cleanup(feedViewModel.relayPool) }
+            }
+            val liveResolvedEmojis by feedViewModel.customEmojiRepo.resolvedEmojis.collectAsState()
+            val liveUnicodeEmojis by feedViewModel.customEmojiRepo.unicodeEmojis.collectAsState()
+            val liveZapVersion by feedViewModel.eventRepo.zapVersion.collectAsState()
+            val liveZapInProgress by feedViewModel.zapInProgress.collectAsState()
+            var liveZapAnimatingIds by remember { mutableStateOf(emptySet<String>()) }
+            var liveZapTarget by remember { mutableStateOf<NostrEvent?>(null) }
+            val isNwcConnected = feedViewModel.activeWalletProvider.hasConnection()
+            LaunchedEffect(Unit) {
+                feedViewModel.zapSuccess.collect { eventId ->
+                    liveZapAnimatingIds = liveZapAnimatingIds + eventId
+                    kotlinx.coroutines.delay(1500)
+                    liveZapAnimatingIds = liveZapAnimatingIds - eventId
+                }
+            }
+            if (liveZapTarget != null) {
+                val zapRecipient = liveZapTarget!!.pubkey
+                var recipientHasDmRelays by remember(zapRecipient) {
+                    mutableStateOf(feedViewModel.relayListRepo.hasDmRelays(zapRecipient))
+                }
+                if (feedViewModel.relayPool.hasDmRelays() && !recipientHasDmRelays) {
+                    LaunchedEffect(zapRecipient) {
+                        recipientHasDmRelays = feedViewModel.fetchDmRelaysIfMissing(zapRecipient)
+                    }
+                }
+                ZapDialog(
+                    isWalletConnected = isNwcConnected,
+                    onDismiss = { liveZapTarget = null },
+                    onZap = { amountMsats, message, isAnonymous, isPrivate ->
+                        val event = liveZapTarget ?: return@ZapDialog
+                        liveZapTarget = null
+                        feedViewModel.sendZap(event, amountMsats, message, isAnonymous, isPrivate)
+                    },
+                    onGoToWallet = { navController.navigate(Routes.WALLET) },
+                    canPrivateZap = feedViewModel.relayPool.hasDmRelays() && recipientHasDmRelays
+                )
+            }
+            LiveStreamScreen(
+                viewModel = liveStreamViewModel,
+                eventRepo = feedViewModel.eventRepo,
+                signer = activeSigner,
+                myPubkey = feedViewModel.getUserPubkey(),
+                onBack = { navController.popBackStack() },
+                onProfileClick = { pubkey -> navController.navigate("profile/$pubkey") },
+                resolvedEmojis = liveResolvedEmojis,
+                unicodeEmojis = liveUnicodeEmojis,
+                onFollowAuthor = { pubkey -> feedViewModel.toggleFollow(pubkey) },
+                onBlockAuthor = { pubkey -> feedViewModel.blockUser(pubkey) },
+                isFollowing = { pubkey -> feedViewModel.contactRepo.isFollowing(pubkey) },
+                onZap = { messageId, senderPubkey ->
+                    // Create a minimal event for the zap sender to target
+                    val chatEvent = feedViewModel.eventRepo.getEvent(messageId)
+                    if (chatEvent != null) liveZapTarget = chatEvent
+                },
+                zapVersion = liveZapVersion,
+                zapAnimatingIds = liveZapAnimatingIds,
+                zapInProgressIds = liveZapInProgress
+            )
         }
 
         composable(Routes.SAFETY) {

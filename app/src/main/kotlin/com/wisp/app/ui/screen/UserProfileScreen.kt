@@ -172,16 +172,18 @@ fun UserProfileScreen(
     onSearchAuthor: (() -> Unit)? = null,
     onPayInvoice: (suspend (String) -> Boolean)? = null,
     onGroupRoom: ((String, String) -> Unit)? = null,
+    onLiveStreamClick: ((String, String, String?) -> Unit)? = null,
     fetchGroupPreview: (suspend (String, String) -> com.wisp.app.repo.GroupPreview?)? = null,
     onAddEmojiSet: ((String, String) -> Unit)? = null,
     onRemoveEmojiSet: ((String, String) -> Unit)? = null,
     isEmojiSetAdded: ((String, String) -> Boolean)? = null
 ) {
-    val invoiceNoteActions = remember(onPayInvoice, onGroupRoom, fetchGroupPreview, onAddEmojiSet) {
-        if (onPayInvoice != null || onGroupRoom != null || fetchGroupPreview != null || onAddEmojiSet != null) {
+    val invoiceNoteActions = remember(onPayInvoice, onGroupRoom, onLiveStreamClick, fetchGroupPreview, onAddEmojiSet) {
+        if (onPayInvoice != null || onGroupRoom != null || fetchGroupPreview != null || onAddEmojiSet != null || onLiveStreamClick != null) {
             com.wisp.app.ui.component.NoteActions(
                 onPayInvoice = onPayInvoice,
                 onGroupRoom = onGroupRoom,
+                onLiveStreamClick = onLiveStreamClick,
                 fetchGroupPreview = fetchGroupPreview,
                 onAddEmojiSet = onAddEmojiSet,
                 onRemoveEmojiSet = onRemoveEmojiSet,
