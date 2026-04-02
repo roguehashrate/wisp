@@ -1,6 +1,5 @@
 package com.wisp.app.ui.component
 
-import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -8,9 +7,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,19 +27,24 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlin.math.roundToInt
 
 data class PipState(
     val url: String,
@@ -78,7 +84,7 @@ object PipController {
 @OptIn(UnstableApi::class)
 @Composable
 fun FloatingVideoPlayer(
-    onExpandToFullScreen: (url: String, positionMs: Long) -> Unit,
+    onExpandToFullScreen: (url: String, positionMs: Long, player: ExoPlayer, aspectRatio: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by PipController.pipState.collectAsState()
@@ -109,12 +115,24 @@ fun FloatingVideoPlayer(
         val pipWidth = 200.dp
         val pipHeight = (200f / pipState.aspectRatio).dp.coerceAtMost(260.dp)
 
+        var offsetX by remember { mutableFloatStateOf(0f) }
+        var offsetY by remember { mutableFloatStateOf(0f) }
+
         Box(
             modifier = Modifier
+                .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
                 .width(pipWidth)
                 .height(pipHeight)
+                .shadow(8.dp, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        offsetX += dragAmount.x
+                        offsetY += dragAmount.y
+                    }
+                }
         ) {
             AndroidView(
                 factory = { ctx ->
@@ -147,10 +165,10 @@ fun FloatingVideoPlayer(
                 onClick = {
                     val position = pipState.player.currentPosition
                     val url = pipState.url
-                    // Try to reclaim inline first; if not possible, go fullscreen
+                    val player = pipState.player
+                    val ratio = pipState.aspectRatio
                     PipController.pipState.value = null
-                    // Give inline a chance to reclaim, otherwise expand to fullscreen
-                    onExpandToFullScreen(url, position)
+                    onExpandToFullScreen(url, position, player, ratio)
                 },
                 modifier = Modifier
                     .align(Alignment.TopStart)
