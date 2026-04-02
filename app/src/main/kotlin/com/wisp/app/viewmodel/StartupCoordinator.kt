@@ -39,6 +39,7 @@ import com.wisp.app.repo.RelayHintStore
 import com.wisp.app.repo.RelayInfoRepository
 import com.wisp.app.repo.RelayListRepository
 import com.wisp.app.repo.InterestRepository
+import com.wisp.app.repo.LiveStreamRepository
 import com.wisp.app.repo.RelaySetRepository
 import com.wisp.app.repo.ZapPreferences
 import com.wisp.app.nostr.NostrSigner
@@ -90,6 +91,7 @@ class StartupCoordinator(
     private val sparkRepo: SparkRepository,
     private val walletModeRepo: WalletModeRepository,
     private val dmRepo: DmRepository,
+    private val liveStreamRepo: LiveStreamRepository?,
     private val zapPrefs: ZapPreferences,
     private val lifecycleManager: RelayLifecycleManager,
     private val eventRouter: EventRouter,
@@ -771,6 +773,19 @@ class StartupCoordinator(
 
             feedSub.subscribeNotifEngagement()
         }
+
+        subscribeLiveStreams(myPubkey)
+    }
+
+    private fun subscribeLiveStreams(myPubkey: String) {
+        // Subscription 1: discover live activities
+        val activityFilter = Filter(kinds = listOf(30311), limit = 50)
+        relayPool.sendToReadRelays(ClientMessage.req("live-activities", activityFilter))
+
+        // Subscription 2: global chat discovery — find streams with recent chat activity
+        val since = System.currentTimeMillis() / 1000 - 3600
+        val chatFilter = Filter(kinds = listOf(1311), since = since, limit = 500)
+        relayPool.sendToReadRelays(ClientMessage.req("live-chat-discovery", chatFilter))
     }
 
     /**

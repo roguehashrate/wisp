@@ -181,6 +181,7 @@ fun FeedScreen(
     onViewSetFeed: ((com.wisp.app.nostr.InterestSet) -> Unit)? = null,
     onArticleClick: ((Int, String, String) -> Unit)? = null,
     onGroupRoom: ((String, String) -> Unit)? = null,
+    onLiveStreamClick: ((String, String, String?) -> Unit)? = null,
     fetchGroupPreview: (suspend (String, String) -> com.wisp.app.repo.GroupPreview?)? = null,
     scrollToTopTrigger: Int = 0
 ) {
@@ -200,6 +201,7 @@ fun FeedScreen(
     val pollVoteVersion by viewModel.eventRepo.pollVoteVersion.collectAsState()
     val translationVersion by viewModel.translationRepo.version.collectAsState()
     val connectedCount by viewModel.relayPool.connectedCount.collectAsState()
+    val liveNowStreams by viewModel.liveNowStreams.collectAsState()
     val listState = rememberLazyListState()
 
     // Viewport-aware engagement: notify ViewModel of visible item range
@@ -326,6 +328,7 @@ fun FeedScreen(
             onArticleClick = onArticleClick,
             onPayInvoice = { bolt11 -> viewModel.payInvoice(bolt11) },
             onGroupRoom = onGroupRoom,
+            onLiveStreamClick = onLiveStreamClick,
             groupMetadataProvider = { relayUrl, groupId -> viewModel.groupRepo.getRoom(relayUrl, groupId)?.metadata },
             fetchGroupPreview = fetchGroupPreview,
             onAddEmojiSet = { pubkey, dTag -> viewModel.addSetToEmojiList(pubkey, dTag) },
@@ -1073,6 +1076,15 @@ fun FeedScreen(
                             state = listState,
                             modifier = Modifier.fillMaxSize()
                         ) {
+                            if (liveNowStreams.isNotEmpty() && onLiveStreamClick != null) {
+                                item(key = "live-now", contentType = "live-now") {
+                                    com.wisp.app.ui.component.LiveNowRow(
+                                        streams = liveNowStreams,
+                                        eventRepo = viewModel.eventRepo,
+                                        onStreamClick = onLiveStreamClick
+                                    )
+                                }
+                            }
                             items(items = feed, key = { it.id }, contentType = { if (it.kind == 30023) "article" else "post" }) { event ->
                                 if (event.kind == 30023) {
                                     FeedArticleItem(

@@ -8,6 +8,7 @@ import com.wisp.app.nostr.EncryptedMedia
 import com.wisp.app.nostr.DmZap
 import com.wisp.app.nostr.Nip10
 import com.wisp.app.nostr.Nip17
+import com.wisp.app.nostr.Nip53
 import com.wisp.app.nostr.Nip30
 import com.wisp.app.nostr.Nip51
 import com.wisp.app.nostr.Nip57
@@ -36,6 +37,7 @@ import com.wisp.app.repo.NotificationRepository
 import com.wisp.app.repo.PinRepository
 import com.wisp.app.repo.DiagnosticLogger
 import com.wisp.app.repo.GroupRepository
+import com.wisp.app.repo.LiveStreamRepository
 import com.wisp.app.repo.RelayHintStore
 import com.wisp.app.repo.RelayListRepository
 import com.wisp.app.repo.RelaySetRepository
@@ -67,6 +69,7 @@ class EventRouter(
     private val dmRepo: DmRepository,
     private val extendedNetworkRepo: ExtendedNetworkRepository,
     private val groupRepo: GroupRepository?,
+    private val liveStreamRepo: LiveStreamRepository?,
     private val metadataFetcher: MetadataFetcher,
     private val getUserPubkey: () -> String?,
     private val getSigner: () -> NostrSigner?,
@@ -292,6 +295,44 @@ class EventRouter(
             if (eventRepo.getProfileData(event.pubkey) == null) {
                 metadataFetcher.addToPendingProfiles(event.pubkey)
             }
+        } else if (subscriptionId == "live-activities") {
+            if (event.kind == Nip53.KIND_LIVE_ACTIVITY) {
+                liveStreamRepo?.addActivity(event)
+                // Also cache in eventRepo so LiveStreamCard can find it via findAddressableEvent
+                eventRepo.cacheEvent(event)
+                if (eventRepo.getProfileData(event.pubkey) == null) {
+                    metadataFetcher.addToPendingProfiles(event.pubkey)
+                }
+            }
+            return
+        } else if (subscriptionId == "live-chat-discovery") {
+            // Discovery only — track chatter counts for pill ranking, don't consume from dedup
+            if (event.kind == Nip53.KIND_LIVE_CHAT_MESSAGE) {
+                liveStreamRepo?.trackChatter(event)
+            }
+            return
+        } else if (subscriptionId.startsWith("live-chat-")) {
+            when (event.kind) {
+                Nip53.KIND_LIVE_CHAT_MESSAGE -> {
+                    eventRepo.cacheEvent(event)
+                    liveStreamRepo?.addChatMessage(event)
+                }
+                7 -> {
+                    val eTag = event.tags.firstOrNull { it.size >= 2 && it[0] == "e" }?.get(1)
+                    val aTag = event.tags.firstOrNull { it.size >= 2 && it[0] == "a" }?.get(1)
+                    if (eTag != null && aTag != null) {
+                        liveStreamRepo?.addReaction(aTag, eTag, event.pubkey, event.content)
+                    }
+                }
+                9735 -> {
+                    eventRepo.addEvent(event)
+                    eventRepo.addEventRelay(event.id, relayUrl)
+                }
+            }
+            if (eventRepo.getProfileData(event.pubkey) == null) {
+                metadataFetcher.addToPendingProfiles(event.pubkey)
+            }
+            return
         } else {
             if (event.kind == 10002) {
                 relayListRepo.updateFromEvent(event)
