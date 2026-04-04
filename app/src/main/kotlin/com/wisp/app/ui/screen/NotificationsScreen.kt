@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.CurrencyBitcoin
 import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.FormatQuote
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.AddReaction
@@ -1887,10 +1888,11 @@ private fun NotificationTypeIcon(item: FlatNotificationItem, showSats: Boolean =
             )
         }
         NotificationType.QUOTE -> {
-            Text(
-                text = "\u201C\u201D",
-                fontSize = 20.sp,
-                color = MaterialTheme.colorScheme.primary
+            Icon(
+                Icons.Outlined.FormatQuote,
+                contentDescription = "Quoted",
+                modifier = Modifier.size(iconSize),
+                tint = MaterialTheme.colorScheme.primary
             )
         }
         NotificationType.MENTION -> {
