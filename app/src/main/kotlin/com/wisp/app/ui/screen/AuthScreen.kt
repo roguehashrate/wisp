@@ -45,8 +45,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -105,20 +107,32 @@ fun AuthScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Image(
-            painter = painterResource(R.mipmap.ic_launcher_foreground),
+        Icon(
+            painter = painterResource(R.drawable.ic_wisp_logo),
             contentDescription = stringResource(R.string.onboarding_wisp_logo),
+            tint = androidx.compose.ui.graphics.Color.Unspecified,
             modifier = Modifier
                 .size(108.dp)
-                .clip(SquircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .drawBehind {
+                    drawCircle(
+                        brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                            colors = listOf(
+                                androidx.compose.ui.graphics.Color.Black,
+                                androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f),
+                                androidx.compose.ui.graphics.Color.Transparent
+                            ),
+                            radius = size.minDimension * 0.65f
+                        ),
+                        radius = size.minDimension * 0.65f
+                    )
+                }
         )
         Text(
             text = stringResource(R.string.auth_wisp),
             style = MaterialTheme.typography.titleLarge.copy(
+                fontFamily = FontFamily.SansSerif,
                 fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp
+                fontWeight = FontWeight.W500
             ),
             color = MaterialTheme.colorScheme.primary
         )
