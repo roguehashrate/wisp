@@ -745,14 +745,18 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
     }
 
     fun findAddressableEvent(kind: Int, author: String, dTag: String): NostrEvent? {
+        if (muteRepo?.isBlocked(author) == true) return null
         return eventCache.values.firstOrNull { event ->
             event.kind == kind && event.pubkey == author &&
                 event.tags.any { it.size >= 2 && it[0] == "d" && it[1] == dTag }
         }
     }
 
-    fun getEvent(id: String): NostrEvent? =
-        eventCache[id] ?: eventPersistence?.getEvent(id)?.also { eventCache[id] = it }
+    fun getEvent(id: String): NostrEvent? {
+        val event = eventCache[id] ?: eventPersistence?.getEvent(id)?.also { eventCache[id] = it }
+        if (event != null && muteRepo?.isBlocked(event.pubkey) == true) return null
+        return event
+    }
 
     /**
      * Bulk-load events from ObjectBox into eventCache and seenEventIds without running
@@ -767,6 +771,7 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
     fun seedFromObjectBox(events: List<NostrEvent>) {
         for (event in events) {
             if (event.kind != 0 && event.kind != 1 && event.kind != 20 && event.kind != 21 && event.kind != 22 && event.kind != 1068 && event.kind != 6969 && event.kind != 30023) continue
+            if (muteRepo?.isBlocked(event.pubkey) == true) continue
             if (!seenEventIds.add(event.id)) continue
             eventCache[event.id] = event
             if (event.kind == 0) {
