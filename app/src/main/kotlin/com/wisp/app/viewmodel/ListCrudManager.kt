@@ -379,10 +379,10 @@ class ListCrudManager(
         publishUserEmojiList(emojis, refs)
     }
 
-    fun fetchMissingEmojiSets() {
-        val missing = customEmojiRepo.getMissingSetReferences()
-        if (missing.isEmpty()) return
-        val parsed = missing.mapNotNull { ref ->
+    fun fetchEmojiSets() {
+        val refs = customEmojiRepo.getSetReferences()
+        if (refs.isEmpty()) return
+        val parsed = refs.mapNotNull { ref ->
             Nip30.parseSetReference(ref)?.let { (_, pubkey, dTag) -> pubkey to dTag }
         }
         if (parsed.isEmpty()) return

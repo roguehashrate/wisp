@@ -305,7 +305,7 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope, processingDispatcher, pubkeyHex,
         getUserPubkey = { getUserPubkey() },
         registerAuthSigner = { registerAuthSigner() },
-        fetchMissingEmojiSets = { listCrud.fetchMissingEmojiSets() },
+        fetchEmojiSets = { listCrud.fetchEmojiSets() },
         getSigner = { signer }
     )
 
@@ -514,10 +514,12 @@ class FeedViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Publish a NIP-38 user status (kind 30315). Empty string clears the status. */
     fun publishUserStatus(status: String) {
-        val s = signer ?: return
         val pubkey = pubkeyHex ?: return
-        // Optimistic local update so UI feels instant
+        // Optimistic local update so UI feels instant (before signer check so the
+        // UI always responds, even if the signer is momentarily unavailable after
+        // process-death recovery).
         eventRepo.setUserStatus(pubkey, status.ifBlank { null })
+        val s = signer ?: return
         viewModelScope.launch {
             val tags = mutableListOf(listOf("d", "general"))
             val event = s.signEvent(kind = 30315, content = status, tags = tags)

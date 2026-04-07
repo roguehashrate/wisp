@@ -101,7 +101,7 @@ class StartupCoordinator(
     private val pubkeyHex: String?,
     private val getUserPubkey: () -> String?,
     private val registerAuthSigner: () -> Unit,
-    private val fetchMissingEmojiSets: () -> Unit,
+    private val fetchEmojiSets: () -> Unit,
     private val getSigner: () -> NostrSigner?
 ) {
     private var eventProcessingJob: Job? = null
@@ -510,19 +510,19 @@ class StartupCoordinator(
      */
     /**
      * Wait for the emoji list (kind 10030) to arrive from EventRouter before
-     * fetching missing emoji sets. EOSE signals the relay finished sending but
+     * fetching referenced emoji sets. EOSE signals the relay finished sending but
      * events may still be buffered in the SharedFlow waiting for processing.
      */
     private suspend fun awaitEmojiListThenFetchSets() {
         if (customEmojiRepo.userEmojiList.value != null) {
-            fetchMissingEmojiSets()
+            fetchEmojiSets()
             return
         }
         // Wait for EventRouter to process the kind 10030 event after EOSE
         withTimeoutOrNull(3_000) {
             customEmojiRepo.userEmojiList.first { it != null }
         }
-        fetchMissingEmojiSets()
+        fetchEmojiSets()
     }
 
     /**
