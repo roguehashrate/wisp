@@ -91,6 +91,7 @@ object Nip51 {
         val dTag = event.tags.firstOrNull { it.size >= 2 && it[0] == "d" }?.get(1) ?: return null
         val relays = mutableSetOf<String>()
         var title: String? = null
+        var name: String? = null
         for (tag in event.tags) {
             if (tag.size < 2) continue
             when (tag[0]) {
@@ -99,12 +100,13 @@ object Nip51 {
                     if (RelayConfig.isValidUrl(url)) relays.add(url)
                 }
                 "title" -> title = tag[1]
+                "name" -> name = tag[1]
             }
         }
         return RelaySet(
             pubkey = event.pubkey,
             dTag = dTag,
-            name = title ?: dTag,
+            name = title ?: name ?: dTag,
             relays = relays,
             createdAt = event.created_at
         )
@@ -192,14 +194,16 @@ object Nip51 {
         for (tag in event.tags) {
             if (tag.size >= 2 && tag[0] == "p") members.add(tag[1])
         }
-        // Check public tags for title
+        // Check public tags for title or name (some clients use "name" instead of "title")
         var title = event.tags.firstOrNull { it.size >= 2 && it[0] == "title" }?.get(1)
+        var name = event.tags.firstOrNull { it.size >= 2 && it[0] == "name" }?.get(1)
         if (decryptedContent != null) {
             for (tag in parsePrivateTagsGeneric(decryptedContent)) {
                 if (tag.size < 2) continue
                 when (tag[0]) {
                     "p" -> members.add(tag[1])
                     "title" -> if (title == null) title = tag[1]
+                    "name" -> if (name == null) name = tag[1]
                 }
             }
         }
@@ -207,7 +211,7 @@ object Nip51 {
         return FollowSet(
             pubkey = event.pubkey,
             dTag = dTag,
-            name = title ?: dTag,
+            name = title ?: name ?: dTag,
             members = members,
             createdAt = event.created_at,
             isPrivate = isPrivate
@@ -237,6 +241,7 @@ object Nip51 {
         val coordinates = mutableSetOf<String>()
         val hashtags = mutableSetOf<String>()
         var title = event.tags.firstOrNull { it.size >= 2 && it[0] == "title" }?.get(1)
+        var name = event.tags.firstOrNull { it.size >= 2 && it[0] == "name" }?.get(1)
         for (tag in event.tags) {
             if (tag.size < 2) continue
             when (tag[0]) {
@@ -254,6 +259,7 @@ object Nip51 {
                     "a" -> coordinates.add(tag[1])
                     "t" -> hashtags.add(tag[1])
                     "title" -> if (title == null) title = tag[1]
+                    "name" -> if (name == null) name = tag[1]
                 }
             }
         }
@@ -261,7 +267,7 @@ object Nip51 {
         return BookmarkSet(
             pubkey = event.pubkey,
             dTag = dTag,
-            name = title ?: dTag,
+            name = title ?: name ?: dTag,
             eventIds = eventIds,
             coordinates = coordinates,
             hashtags = hashtags,
@@ -341,16 +347,18 @@ object Nip51 {
         val dTag = event.tags.firstOrNull { it.size >= 2 && it[0] == "d" }?.get(1) ?: return null
         val hashtags = mutableSetOf<String>()
         var title: String? = null
+        var name: String? = null
         for (tag in event.tags) {
             if (tag.size < 2) continue
             when (tag[0]) {
                 "t" -> hashtags.add(tag[1].lowercase())
                 "title" -> title = tag[1]
+                "name" -> name = tag[1]
             }
         }
         return InterestSet(
             dTag = dTag,
-            name = title ?: dTag,
+            name = title ?: name ?: dTag,
             hashtags = hashtags,
             createdAt = event.created_at
         )
