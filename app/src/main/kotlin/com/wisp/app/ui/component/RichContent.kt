@@ -2141,8 +2141,11 @@ internal fun InlineVideoPlayerWithFullscreen(url: String, onFullScreen: (positio
     }
 
     Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
             .heightIn(max = 500.dp)
             .aspectRatio(videoAspectRatio)
             .clip(RoundedCornerShape(12.dp))
@@ -2268,6 +2271,7 @@ internal fun InlineVideoPlayerWithFullscreen(url: String, onFullScreen: (positio
             }
         }
     }
+    } // centering wrapper
 }
 
 @OptIn(UnstableApi::class)
