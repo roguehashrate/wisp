@@ -54,6 +54,8 @@ class EventRepository(val profileRepo: ProfileRepository? = null, val muteRepo: 
     fun setUserStatus(pubkey: String, status: String?) {
         if (status.isNullOrBlank()) userStatusCache.remove(pubkey)
         else userStatusCache[pubkey] = status
+        // Advance the timestamp so relay re-fetches of older events can't overwrite this
+        userStatusTimestamps[pubkey] = System.currentTimeMillis() / 1000
         _statusVersion.value++
     }
 

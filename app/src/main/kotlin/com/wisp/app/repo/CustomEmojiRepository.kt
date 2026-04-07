@@ -95,13 +95,8 @@ class CustomEmojiRepository(private val context: Context, pubkeyHex: String? = n
         _resolvedEmojis.value = map
     }
 
-    fun getMissingSetReferences(): List<String> {
-        val refs = _userEmojiList.value?.setReferences ?: return emptyList()
-        return refs.filter { ref ->
-            val parsed = Nip30.parseSetReference(ref) ?: return@filter false
-            val key = "${parsed.second}:${parsed.third}"
-            !emojiSets.containsKey(key)
-        }
+    fun getSetReferences(): List<String> {
+        return _userEmojiList.value?.setReferences ?: emptyList()
     }
 
     fun getEventEmojis(eventId: String): Map<String, String>? = eventEmojiCache.get(eventId)
