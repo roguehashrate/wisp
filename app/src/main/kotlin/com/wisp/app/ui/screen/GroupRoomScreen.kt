@@ -219,16 +219,7 @@ fun GroupRoomScreen(
     var prevMessageCount by remember { mutableIntStateOf(0) }
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
     var highlightTrigger by remember { mutableIntStateOf(0) }
-    var selectedMessageId by remember { mutableStateOf<String?>(null) }
     val scrollScope = rememberCoroutineScope()
-
-    // Auto-dismiss action bar after 5 seconds
-    LaunchedEffect(selectedMessageId) {
-        if (selectedMessageId != null) {
-            kotlinx.coroutines.delay(5000)
-            selectedMessageId = null
-        }
-    }
 
     // Track whether we've handled the initial scrollToMessageId target
     var scrollTargetHandled by remember { mutableStateOf(scrollToMessageId == null) }
@@ -487,7 +478,6 @@ fun GroupRoomScreen(
                         GroupMessageBubble(
                             message = message,
                             isSearchHighlighted = message.id == highlightedMessageId,
-                            isSelected = message.id == selectedMessageId,
                             allMessages = messages,
                             eventRepo = eventRepo,
                             myPubkey = myPubkey,
@@ -500,12 +490,8 @@ fun GroupRoomScreen(
                             highlightTrigger = if (message.id == highlightedMessageId) highlightTrigger else 0,
                             onProfileClick = onProfileClick,
                             onNoteClick = onNoteClick,
-                            onSelect = { id ->
-                                selectedMessageId = if (selectedMessageId == id) null else id
-                            },
                             onReply = {
                                 viewModel.setReplyTarget(it)
-                                selectedMessageId = null
                                 textFieldFocus.requestFocus()
                             },
                             onScrollToMessage = { targetId ->
@@ -901,7 +887,6 @@ private fun GroupMemberAvatarStrip(
 private fun GroupMessageBubble(
     message: GroupMessage,
     isSearchHighlighted: Boolean = false,
-    isSelected: Boolean = false,
     allMessages: List<GroupMessage>,
     eventRepo: EventRepository,
     myPubkey: String?,
@@ -914,7 +899,6 @@ private fun GroupMessageBubble(
     highlightTrigger: Int = 0,
     onProfileClick: (String) -> Unit,
     onNoteClick: ((String) -> Unit)? = null,
-    onSelect: (String) -> Unit = {},
     onReply: (GroupMessage) -> Unit,
     onScrollToMessage: ((String) -> Unit)? = null,
     onReact: (messageId: String, senderPubkey: String, emoji: String) -> Unit,
@@ -1002,7 +986,6 @@ private fun GroupMessageBubble(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.primary.copy(alpha = highlightAlpha))
-            .clickable { onSelect(message.id) }
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .offset { IntOffset(swipeOffset.value.toInt(), 0) }
             .pointerInput(message.id) {
@@ -1048,7 +1031,84 @@ private fun GroupMessageBubble(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(6.dp))
+                val iconTint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                // Reply
+                Icon(
+                    Icons.Outlined.ChatBubbleOutline,
+                    contentDescription = "Reply",
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable { onReply(message) }
+                        .padding(5.dp),
+                    tint = iconTint
+                )
+                // React + emoji popup
+                Box {
+                    Icon(
+                        Icons.Filled.FavoriteBorder,
+                        contentDescription = "React",
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable { showEmojiPicker = true }
+                            .padding(5.dp),
+                        tint = if (myReactions.isNotEmpty()) MaterialTheme.colorScheme.error
+                               else iconTint
+                    )
+                    if (showEmojiPicker) {
+                        EmojiReactionPopup(
+                            onSelect = { emoji -> onReact(message.id, message.senderPubkey, emoji) },
+                            onDismiss = { showEmojiPicker = false },
+                            selectedEmojis = myReactions,
+                            resolvedEmojis = resolvedEmojis,
+                            unicodeEmojis = unicodeEmojis,
+                            onOpenEmojiLibrary = onOpenEmojiLibrary?.let { { showEmojiPicker = false; it() } }
+                        )
+                    }
+                }
+                // Zap + burst animation
+                if (onZap != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .wrapContentSize(unbounded = true, align = Alignment.Center)
+                    ) {
+                        Icon(
+                            Icons.Filled.Bolt,
+                            contentDescription = "Zap",
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clickable(enabled = !isZapInProgress) {
+                                    onZap(message.id, message.senderPubkey)
+                                }
+                                .padding(5.dp),
+                            tint = when {
+                                isZapInProgress -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                hasZaps || isZapAnimating -> com.wisp.app.ui.theme.WispThemeColors.zapColor
+                                else -> iconTint
+                            }
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .wrapContentSize(unbounded = true, align = Alignment.Center)
+                        ) {
+                            com.wisp.app.ui.component.ZapBurstEffect(
+                                isActive = isZapAnimating,
+                                modifier = Modifier.size(80.dp)
+                            )
+                        }
+                    }
+                    if (hasZaps) {
+                        Text(
+                            text = formatZapSats(zapSats),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 10.sp,
+                            color = com.wisp.app.ui.theme.WispThemeColors.zapColor
+                        )
+                    }
+                }
+                Spacer(Modifier.width(6.dp))
                 Text(
                     text = formatGroupTimestamp(message.createdAt),
                     style = MaterialTheme.typography.labelSmall,
@@ -1165,95 +1225,6 @@ private fun GroupMessageBubble(
                 }
             }
 
-            // Action row — only visible when message is tapped
-            if (isSelected) {
-                Box {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 2.dp)
-                    ) {
-                        // Reply
-                        IconButton(onClick = { onReply(message) }, modifier = Modifier.size(36.dp)) {
-                            Icon(
-                                Icons.Outlined.ChatBubbleOutline,
-                                contentDescription = "Reply",
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        // React — opens emoji picker
-                        IconButton(
-                            onClick = { showEmojiPicker = true },
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.FavoriteBorder,
-                                contentDescription = "React",
-                                modifier = Modifier.size(18.dp),
-                                tint = if (myReactions.isNotEmpty()) MaterialTheme.colorScheme.error
-                                       else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        // Zap
-                        if (onZap != null) {
-                            Box {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.clickable(enabled = !isZapInProgress) {
-                                        onZap(message.id, message.senderPubkey)
-                                    }
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .wrapContentSize(unbounded = true, align = Alignment.Center)
-                                    ) {
-                                        Icon(
-                                            Icons.Filled.Bolt,
-                                            contentDescription = "Zap",
-                                            modifier = Modifier.size(18.dp),
-                                            tint = when {
-                                                isZapInProgress -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                                                hasZaps || isZapAnimating -> com.wisp.app.ui.theme.WispThemeColors.zapColor
-                                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                                            }
-                                        )
-                                        // Burst animation overlay
-                                        Box(
-                                            modifier = Modifier
-                                                .matchParentSize()
-                                                .wrapContentSize(unbounded = true, align = Alignment.Center)
-                                        ) {
-                                            com.wisp.app.ui.component.ZapBurstEffect(
-                                                isActive = isZapAnimating,
-                                                modifier = Modifier.size(80.dp)
-                                            )
-                                        }
-                                    }
-                                    if (hasZaps) {
-                                        Text(
-                                            text = formatZapSats(zapSats),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontSize = 10.sp,
-                                            color = com.wisp.app.ui.theme.WispThemeColors.zapColor
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (showEmojiPicker) {
-                        EmojiReactionPopup(
-                            onSelect = { emoji -> onReact(message.id, message.senderPubkey, emoji) },
-                            onDismiss = { showEmojiPicker = false },
-                            selectedEmojis = myReactions,
-                            resolvedEmojis = resolvedEmojis,
-                            unicodeEmojis = unicodeEmojis,
-                            onOpenEmojiLibrary = onOpenEmojiLibrary?.let { { showEmojiPicker = false; it() } }
-                        )
-                    }
-                }
-            }
         }
         // 3-dot overflow menu — far right of message
         Box(modifier = Modifier.align(Alignment.Top)) {
