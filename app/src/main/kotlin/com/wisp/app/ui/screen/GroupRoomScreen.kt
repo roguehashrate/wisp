@@ -70,8 +70,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.CurrencyBitcoin
+import androidx.compose.material.icons.outlined.FlashOn
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
@@ -817,14 +822,15 @@ fun GroupRoomScreen(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .heightIn(min = 28.dp)
+                                                .padding(top = 4.dp)
                                         )
                                         if (sending || uploadProgress != null) {
                                             Box(
-                                                modifier = Modifier.size(36.dp),
+                                                modifier = Modifier.size(32.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 CircularProgressIndicator(
-                                                    modifier = Modifier.size(20.dp),
+                                                    modifier = Modifier.size(18.dp),
                                                     strokeWidth = 2.dp
                                                 )
                                             }
@@ -834,7 +840,7 @@ fun GroupRoomScreen(
                                                     viewModel.sendMessage(relayPool, signer, resolvedEmojis)
                                                 },
                                                 enabled = sendEnabled,
-                                                modifier = Modifier.size(36.dp)
+                                                modifier = Modifier.size(32.dp)
                                             ) {
                                                 Icon(
                                                     Icons.AutoMirrored.Filled.Send,
@@ -1016,13 +1022,13 @@ private fun profileBarColorFromPubkey(pubkey: String): Color {
 }
 
 @Composable
-private fun GroupChatSectionEyebrow(text: String) {
+private fun GroupChatSectionEyebrow(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 2.sp),
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
-        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+        modifier = modifier.padding(start = 4.dp, bottom = 2.dp)
     )
 }
 
@@ -1057,7 +1063,9 @@ private fun GroupChatQuotedMessage(
                 .background(barColor, RoundedCornerShape(2.dp))
         )
         Column(
-            modifier = Modifier.padding(start = 10.dp, top = 6.dp, end = 10.dp, bottom = 6.dp),
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 10.dp, top = 6.dp, end = 10.dp, bottom = 6.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // Author row — optionally includes a dismiss button on the right
@@ -1111,7 +1119,7 @@ private fun GroupChatQuotedMessage(
 }
 
 @Composable
-private fun GroupChatHorizontalChipStrip(
+fun GroupChatHorizontalChipStrip(
     scrollState: ScrollState,
     stripBackground: Color,
     chipFill: Color,
@@ -1217,7 +1225,6 @@ private fun GroupMessageBubble(
 
     var showEmojiPicker by remember(message.id) { mutableStateOf(false) }
     var showActionsSheet by remember(message.id) { mutableStateOf(false) }
-    var showDetailsSheet by remember(message.id) { mutableStateOf(false) }
     val actionsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val rowTapInteraction = remember { MutableInteractionSource() }
@@ -1240,6 +1247,7 @@ private fun GroupMessageBubble(
     val zapSats = remember(message.id, zapVersion) { eventRepo.getZapSats(message.id) }
     val hasZaps = zapSats > 0
     val isOwnMessage = message.senderPubkey == myPubkey
+    val following = !isOwnMessage && isFollowing?.invoke(message.senderPubkey) == true
 
     val replyHighlightAlpha = remember { Animatable(0f) }
     LaunchedEffect(highlightTrigger) {
@@ -1286,7 +1294,12 @@ private fun GroupMessageBubble(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = highlightAlpha))
-                .padding(horizontal = 12.dp, vertical = 4.dp)
+                .padding(
+                    start = if (isOwnMessage) 24.dp else 12.dp,
+                    end = 12.dp,
+                    top = 4.dp,
+                    bottom = 4.dp
+                )
                 .offset { IntOffset(swipeOffset.value.toInt(), 0) }
                 .pointerInput(message.id) {
                     var triggered = false
@@ -1325,7 +1338,7 @@ private fun GroupMessageBubble(
                     size = 36,
                     onClick = { onProfileClick(message.senderPubkey) }
                 )
-                Spacer(Modifier.width(10.dp))
+                Spacer(Modifier.width(6.dp))
             }
             BoxWithConstraints(
                 modifier = Modifier.weight(1f, fill = isOwnMessage),
@@ -1336,7 +1349,7 @@ private fun GroupMessageBubble(
                         RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 4.dp, bottomStart = 16.dp)
                     else
                         RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp, bottomStart = 4.dp),
-                    color = if (isOwnMessage) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    color = if (isOwnMessage) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
                             else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
                     modifier = Modifier
                         .widthIn(min = 80.dp, max = maxWidth - 28.dp)
@@ -1389,6 +1402,7 @@ private fun GroupMessageBubble(
                                 authorPubkey = replyToMessage.senderPubkey,
                                 authorName = replyName,
                                 content = replyToMessage.content,
+                                modifier = Modifier.fillMaxWidth(),
                                 onClick = { onScrollToMessage?.invoke(replyToMessage.id) }
                             )
                         }
@@ -1498,7 +1512,6 @@ private fun GroupMessageBubble(
             val modalBg = MaterialTheme.colorScheme.surface
             val chipFill = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
             val stripBg = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.5f)
-            val following = !isOwnMessage && isFollowing?.invoke(message.senderPubkey) == true
             // Custom emoji shortcodes take priority; UTF emojis only shown when no custom ones exist
             val reactionPick = remember(unicodeEmojis) {
                 val customOnly = unicodeEmojis.filter { it.startsWith(":") && it.endsWith(":") }
@@ -1509,7 +1522,7 @@ private fun GroupMessageBubble(
                     .fillMaxWidth()
                     .verticalScroll(sheetScroll)
                     .navigationBarsPadding()
-                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                    .padding(vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Surface(
@@ -1520,6 +1533,7 @@ private fun GroupMessageBubble(
                         MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
                     ),
                     modifier = Modifier
+                        .padding(horizontal = 12.dp)
                         .fillMaxWidth()
                         .clickable {
                             showActionsSheet = false
@@ -1560,7 +1574,10 @@ private fun GroupMessageBubble(
                 }
 
                 // React section
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     GroupChatSectionEyebrow(stringResource(R.string.group_room_eyebrow_react))
                     GroupChatHorizontalChipStrip(
                         scrollState = reactScroll,
@@ -1612,222 +1629,151 @@ private fun GroupMessageBubble(
                     }
                 }
 
-                if (onZap != null) {
-                    // Zap section
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        GroupChatSectionEyebrow(stringResource(R.string.group_room_eyebrow_zap))
-                        GroupChatHorizontalChipStrip(
-                            scrollState = zapScroll,
-                            stripBackground = stripBg,
-                            chipFill = chipFill,
-                            chevronBackground = modalBg,
-                            trailingOnClick = {
+                // Actions panel — eyebrow + bare horizontally scrollable row of panel buttons
+                val showFollow = !isOwnMessage && onFollowAuthor != null
+                val showBlock = !isOwnMessage && onBlockAuthor != null
+                val actionsPanelPrefs = context.getSharedPreferences("wisp_settings", android.content.Context.MODE_PRIVATE)
+                val useZapBoltIcon = actionsPanelPrefs.getBoolean("zap_bolt_icon", false)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    GroupChatSectionEyebrow(
+                        stringResource(R.string.group_room_eyebrow_actions),
+                        modifier = Modifier.padding(start = 12.dp)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                    Spacer(Modifier.width(4.dp))
+                    if (onZap != null) {
+                        GroupChatCamPanelButton(
+                            modifier = Modifier.width(82.dp),
+                            enabled = !isZapInProgress,
+                            onClick = {
                                 showActionsSheet = false
                                 onZap(message.id, message.senderPubkey)
                             },
-                            trailingEnabled = !isZapInProgress,
-                            trailingContentDescription = stringResource(R.string.cd_open_full_zap)
-                        ) {
-                            GROUP_CHAT_ZAP_PRESET_AMOUNTS.forEach { amt ->
-                                Surface(
-                                    onClick = {
-                                        showActionsSheet = false
-                                        if (onZapPreset != null) {
-                                            onZapPreset(message.id, message.senderPubkey, amt)
-                                        } else {
-                                            onZap(message.id, message.senderPubkey)
-                                        }
-                                    },
-                                    enabled = !isZapInProgress,
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = modalBg
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .height(32.dp)
-                                            .padding(horizontal = 10.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_bolt),
-                                            contentDescription = null,
-                                            tint = WispThemeColors.zapColor,
-                                            modifier = Modifier.size(12.dp)
-                                        )
-                                        Text(
-                                            text = formatGroupCamChipAmount(amt),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
+                            icon = {
+                                if (useZapBoltIcon) {
+                                    Icon(
+                                        Icons.Outlined.FlashOn,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Outlined.CurrencyBitcoin,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
                                 }
+                            },
+                            label = stringResource(R.string.group_room_eyebrow_zap)
+                        )
+                    }
+                    if (showFollow) {
+                        GroupChatCamPanelButton(
+                            modifier = Modifier.width(82.dp),
+                            enabled = true,
+                            onClick = {
+                                showActionsSheet = false
+                                onFollowAuthor?.invoke(message.senderPubkey)
+                            },
+                            icon = {
+                                Icon(Icons.Outlined.PersonAdd, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                            },
+                            label = if (following) stringResource(R.string.btn_unfollow) else stringResource(R.string.btn_follow)
+                        )
+                    }
+                    if (showBlock) {
+                        GroupChatCamPanelButton(
+                            modifier = Modifier.width(82.dp),
+                            enabled = true,
+                            onClick = {
+                                showActionsSheet = false
+                                onBlockAuthor?.invoke(message.senderPubkey)
+                            },
+                            icon = {
+                                Icon(Icons.Outlined.Block, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                            },
+                            label = stringResource(R.string.btn_block)
+                        )
+                    }
+                    GroupChatCamPanelButton(
+                        modifier = Modifier.width(82.dp),
+                        enabled = true,
+                        onClick = {
+                            showActionsSheet = false
+                            try {
+                                val nevent = Nip19.neventEncode(message.id.hexToByteArray())
+                                val url = "https://njump.me/$nevent"
+                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_TEXT, url)
+                                }
+                                context.startActivity(android.content.Intent.createChooser(intent, null))
+                            } catch (_: Exception) {}
+                        },
+                        icon = {
+                            Icon(Icons.Outlined.Share, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                        },
+                        label = stringResource(R.string.btn_share)
+                    )
+                    GroupChatCamPanelButton(
+                        modifier = Modifier.width(82.dp),
+                        enabled = true,
+                        onClick = {
+                            showActionsSheet = false
+                            try {
+                                val relays = eventRepo.getEventRelays(message.id).take(3).toList()
+                                val neventId = Nip19.neventEncode(
+                                    eventId = message.id.hexToByteArray(),
+                                    relays = relays,
+                                    author = message.senderPubkey.hexToByteArray()
+                                )
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(neventId))
+                            } catch (_: Exception) {}
+                        },
+                        icon = {
+                            Icon(Icons.Outlined.ContentCopy, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                        },
+                        label = "ID"
+                    )
+                    GroupChatCamPanelButton(
+                        modifier = Modifier.width(82.dp),
+                        enabled = true,
+                        onClick = {
+                            showActionsSheet = false
+                            val event = eventRepo.getEvent(message.id)
+                            if (event != null) {
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(event.toJson()))
                             }
-                        }
+                        },
+                        icon = {
+                            Icon(Icons.Outlined.ContentCopy, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                        },
+                        label = "JSON"
+                    )
+                    GroupChatCamPanelButton(
+                        modifier = Modifier.width(82.dp),
+                        enabled = true,
+                        onClick = {
+                            showActionsSheet = false
+                            clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
+                        },
+                        icon = {
+                            Icon(Icons.Outlined.ContentCopy, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                        },
+                        label = "Text"
+                    )
+                    Spacer(Modifier.width(4.dp))
                     }
                 }
-
-                // Actions section — follow/block hidden for own messages
-                val showFollow = !isOwnMessage && onFollowAuthor != null
-                val showBlock = !isOwnMessage && onBlockAuthor != null
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        GroupChatSectionEyebrow(stringResource(R.string.group_room_eyebrow_actions))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            if (showFollow) {
-                                GroupChatCamPanelButton(
-                                    modifier = Modifier.weight(1f),
-                                    enabled = true,
-                                    onClick = {
-                                        showActionsSheet = false
-                                        onFollowAuthor?.invoke(message.senderPubkey)
-                                    },
-                                    icon = {
-                                        Icon(
-                                            Icons.Outlined.PersonAdd,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    },
-                                    label = if (following) stringResource(R.string.btn_unfollow) else stringResource(R.string.btn_follow)
-                                )
-                            }
-                            if (showBlock) {
-                                GroupChatCamPanelButton(
-                                    modifier = Modifier.weight(1f),
-                                    enabled = true,
-                                    onClick = {
-                                        showActionsSheet = false
-                                        onBlockAuthor?.invoke(message.senderPubkey)
-                                    },
-                                    icon = {
-                                        Icon(
-                                            Icons.Outlined.Block,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    },
-                                    label = stringResource(R.string.btn_block)
-                                )
-                            }
-                            GroupChatCamPanelButton(
-                                modifier = Modifier.weight(1f),
-                                enabled = true,
-                                onClick = {
-                                    showActionsSheet = false
-                                    try {
-                                        val nevent = Nip19.neventEncode(message.id.hexToByteArray())
-                                        val url = "https://njump.me/$nevent"
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                            type = "text/plain"
-                                            putExtra(android.content.Intent.EXTRA_TEXT, url)
-                                        }
-                                        context.startActivity(android.content.Intent.createChooser(intent, null))
-                                    } catch (_: Exception) {}
-                                },
-                                icon = {
-                                    Icon(
-                                        Icons.Outlined.Share,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                },
-                                label = stringResource(R.string.btn_share)
-                            )
-                            GroupChatCamPanelButton(
-                                modifier = Modifier.weight(1f),
-                                enabled = true,
-                                onClick = {
-                                    showActionsSheet = false
-                                    showDetailsSheet = true
-                                },
-                                icon = {
-                                    Icon(
-                                        Icons.Outlined.Info,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                },
-                                label = stringResource(R.string.btn_details)
-                            )
-                        }
-                }  // end actions section Column
-            }
-        }
-    }
-
-    if (showDetailsSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showDetailsSheet = false },
-            containerColor = MaterialTheme.colorScheme.surface
-        ) {
-            Column(modifier = Modifier.padding(bottom = 24.dp)) {
-                Text(
-                    text = stringResource(R.string.btn_details),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-                )
-                Text(
-                    text = "Author: ${message.senderPubkey.take(12)}…",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)
-                )
-                Text(
-                    text = "Time: ${formatGroupTimestamp(message.createdAt)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)
-                )
-                Text(
-                    text = "Event ID: ${message.id.take(16)}…",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-                GroupMessageActionRow(
-                    label = stringResource(R.string.btn_copy_note_id),
-                    onClick = {
-                        showDetailsSheet = false
-                        try {
-                            val relays = eventRepo.getEventRelays(message.id).take(3).toList()
-                            val neventId = Nip19.neventEncode(
-                                eventId = message.id.hexToByteArray(),
-                                relays = relays,
-                                author = message.senderPubkey.hexToByteArray()
-                            )
-                            clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(neventId))
-                        } catch (_: Exception) {}
-                    }
-                )
-                GroupMessageActionRow(
-                    label = stringResource(R.string.btn_copy_note_json),
-                    onClick = {
-                        showDetailsSheet = false
-                        val event = eventRepo.getEvent(message.id)
-                        if (event != null) {
-                            clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(event.toJson()))
-                        }
-                    }
-                )
-                GroupMessageActionRow(
-                    label = stringResource(R.string.btn_copy_text),
-                    onClick = {
-                        showDetailsSheet = false
-                        clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.content))
-                    }
-                )
             }
         }
     }
@@ -1872,6 +1818,7 @@ private fun GroupChatCamPanelButton(
 @Composable
 private fun GroupMessageActionRow(
     label: String,
+    icon: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
@@ -1879,9 +1826,13 @@ private fun GroupMessageActionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = enabled) { onClick() }
-            .padding(horizontal = 20.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        if (icon != null) {
+            Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) { icon() }
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,

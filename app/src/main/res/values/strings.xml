@@ -242,7 +242,7 @@
     <string name="group_room_section_zap">Zap</string>
     <string name="group_room_section_actions">Actions</string>
     <string name="group_room_eyebrow_react">REACT</string>
-    <string name="group_room_eyebrow_zap">ZAP</string>
+    <string name="group_room_eyebrow_zap">Zap</string>
     <string name="group_room_eyebrow_actions">ACTIONS</string>
     <string name="cd_open_full_zap">Open zap dialog</string>
     <string name="cd_open_reaction_picker">Open reaction picker</string>
